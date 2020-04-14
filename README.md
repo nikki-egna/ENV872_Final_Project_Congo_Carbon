@@ -6,23 +6,11 @@ This repository uses data from the Poulsen Tropical Ecology Lab, and contains in
 
 ## Investigators
 
-Nikki Egna
-Master's Student
-Duke University
-nicole.egna@duke.edu
-Primary investigator
+Nikki Egna -- Master's Student -- Duke University -- nicole.egna@duke.edu -- Primary investigator
 
-Anna Nordseth
-PhD Candidate
-Duke University
-anna.nordseth@duke.edu
-Secondary investigator
+Anna Nordseth -- PhD Candidate -- Duke University -- anna.nordseth@duke.edu -- Secondary investigator
 
-John Poulsen
-Director
-Poulsen Tropical Ecology Lab
-Duke University
-john.poulsen@duke.edu
+John Poulsen -- Director -- Poulsen Tropical Ecology Lab -- Duke University -- john.poulsen@duke.edu -- Supervisor
 
 
 ## Keywords
@@ -46,7 +34,7 @@ The raster layers are TIFF files that are named describing what the raster is. F
 
 ## Metadata
 
-###CongoCarbon_Raw_data.csv
+### CongoCarbon_Raw_data.csv
 
 Column Name | Description
 ----------- | -----------
@@ -75,29 +63,29 @@ DBH3_13	    | Fourth diameter measurement in 2013 (Numeric; Centimeters)
 DBH4_13	    | Fifth diameter measurement in 2013 (Numeric; Centimeters)
 Census Notes| Notes from the field researcher about general survey topics (Character)
 
-###CongoCarbon_Plot_Covariates
+### CongoCarbon_Plot_Covariates
 
 Column Name         | Description
 ------------------- | -----------
-Plot	              | Tree plot ID number (factor)
-Latitude	          | Latitude of the plot (numeric)
-Longitude	          | Longitude of the plot (numeric)
-HFI	                | Human Footprint Index value at the plot location (factor)
-GlobCover           |	GlobCover vegetation index value at the plot location (factor)
-Precip_sum_2013	    | Annual precipitation sum for 2013 at plot location (numeric; millimeters)
-Dist_Road_m	        | Distance from plot to the nearest road (numeric; meters)
-Dist_Village_m	    | Distance from plot to the nearest village (numeric; meters)
-sum_AGB05	          | Sum of above ground biomass within the plot for 2005 (numeric; ?)
-sum_AGB09           | Sum of above ground biomass within the plot for 2009 (numeric; ?)
+Plot	              | Tree plot ID number (Factor)
+Latitude	          | Latitude of the plot (Numeric)
+Longitude	          | Longitude of the plot (Numeric)
+HFI	                | Human Footprint Index value at the plot location (Factor)
+GlobCover           |	GlobCover vegetation index value at the plot location (Factor)
+Precip_sum_2013	    | Annual precipitation sum for 2013 at plot location (Numeric; millimeters)
+Dist_Road_m	        | Distance from plot to the nearest road (Numeric; Meters)
+Dist_Village_m	    | Distance from plot to the nearest village (Numeric; Meters)
+sum_AGB05	          | Sum of above ground biomass within the plot for 2005 (Numeric; g/m^2)
+sum_AGB09           | Sum of above ground biomass within the plot for 2009 (Numeric; g/m^2)
 
-###CongoCarbon_AGB_by_Plot.csv
+### CongoCarbon_AGB_by_Plot.csv
 
 Column Name         | Description
 ------------------- | -----------
 Plot	              | Study plot number (Numeric)
-sum_AGB05	          | Sum of above ground biomass within the plot for 2005 (numeric; ?)
-sum_AGB09           | Sum of above ground biomass within the plot for 2009 (numeric; ?)
-sum_AGB13           | Sum of above ground biomass within the plot for 2013 (numeric; ?)
+sum_AGB05	          | Sum of above ground biomass within the plot for 2005 (Numeric; g/m^2)
+sum_AGB09           | Sum of above ground biomass within the plot for 2009 (Numeric; g/m^2)
+sum_AGB13           | Sum of above ground biomass within the plot for 2013 (Numeric; g/m^2)
 
 
 ## Scripts and code
