@@ -46,18 +46,65 @@ The raster layers are TIFF files that are named describing what the raster is. F
 
 ## Metadata
 
-<For each data file in the repository, describe the data contained in each column. Include the column name, a description of the information, the class of data, and any units associated with the data. Create a list or table for each data file.> 
+###CongoCarbon_Raw_data.csv
+
+Column Name | Description
+----------- | -----------
+Tree ID	    | Identification number assigned to the unique tree (Numeric)
+Tag No      | Secondary tree identification number (Numeric)
+Plot	      | Study plot number (Numeric)
+Subplot	    | Subplot number within each plot (Numeric)
+Family      | Tree family name (Character)
+Species	    | Tree species name (Character)
+Tree Notes  |	Notes from the field researcher about the tree(Character)
+WD	        | Wood density (Numeric)
+DBH0_05	    | First diameter measurement in 2005 (Numeric; Centimeters)
+DBH1_05	    | Second diameter measurement in 2005 (Numeric; Centimeters)
+DBH2_05	    | Third diameter measurement in 2005 (Numeric; Centimeters)
+DBH3_05	    | Fourth diameter measurement in 2005 (Numeric; Centimeters)
+DBH4_05	    | Fifth diameter measurement in 2005 (Numeric; Centimeters)
+DBH0_09	    | First diameter measurement in 2009 (Numeric; Centimeters)
+DBH1_09	    | Second diameter measurement in 2009 (Numeric; Centimeters)
+DBH2_09	    | Third diameter measurement in 2009 (Numeric; Centimeters)
+DBH3_09	    | Fourth diameter measurement in 2009 (Numeric; Centimeters)
+DBH4_09   	| Fifth diameter measurement in 2009 (Numeric; Centimeters)
+DBH0_13	    | First diameter measurement in 2013 (Numeric; Centimeters)
+DBH1_13	    | Second diameter measurement in 2013 (Numeric; Centimeters)
+DBH2_13	    | Third diameter measurement in 2013 (Numeric; Centimeters)
+DBH3_13	    | Fourth diameter measurement in 2013 (Numeric; Centimeters)
+DBH4_13	    | Fifth diameter measurement in 2013 (Numeric; Centimeters)
+Census Notes| Notes from the field researcher about general survey topics (Character)
+
+###CongoCarbon_Plot_Covariates
+
+Column Name         | Description
+------------------- | -----------
+Plot	              | Tree plot ID number (factor)
+Latitude	          | Latitude of the plot (numeric)
+Longitude	          | Longitude of the plot (numeric)
+HFI	                | Human Footprint Index value at the plot location (factor)
+GlobCover           |	GlobCover vegetation index value at the plot location (factor)
+Precip_sum_2013	    | Annual precipitation sum for 2013 at plot location (numeric; millimeters)
+Dist_Road_m	        | Distance from plot to the nearest road (numeric; meters)
+Dist_Village_m	    | Distance from plot to the nearest village (numeric; meters)
+sum_AGB05	          | Sum of above ground biomass within the plot for 2005 (numeric; ?)
+sum_AGB09           | Sum of above ground biomass within the plot for 2009 (numeric; ?)
+
+###CongoCarbon_AGB_by_Plot.csv
+
+Column Name         | Description
+------------------- | -----------
+Plot	              | Study plot number (Numeric)
+sum_AGB05	          | Sum of above ground biomass within the plot for 2005 (numeric; ?)
+sum_AGB09           | Sum of above ground biomass within the plot for 2009 (numeric; ?)
+sum_AGB13           | Sum of above ground biomass within the plot for 2013 (numeric; ?)
+
 
 ## Scripts and code
 
-<list any software scripts/code contained in the repository and a description of their purpose.>
+Congo_Plots_Clean 191220.R takes uses information in the raw data file, such as diameter, tree species, and wood density, to estimates above ground biomass (AGB) for each tree. It corrects any mistake values and checks to make sure that the resulting AGB is all logical. It then sums the AGB by plot, creating the CongoCarbon_AGB_by_Plot.csv, which lists the plot number and the sum AGB for each year (2005, 2009, and 2013). The Congo_Mapping.R script extracts covariate values for each plot based upon different raster and vector data. For example, it reads a shapefile of the roads in Congo, and runs a function to determine the distance from each plot to the nearest road. It creates the CongoCarbon_Plot_Covariates.csv.
 
 ## Quality assurance/quality control
 
-<describe any relevant QA/QC procedures taken with your data. Some ideas can be found here:>
-<https://www.dataone.org/best-practices/develop-quality-assurance-and-quality-control-plan>
-<https://www.dataone.org/best-practices/ensure-basic-quality-control>
-<https://www.dataone.org/best-practices/communicate-data-quality>
-<https://www.dataone.org/best-practices/identify-outliers>
-<https://www.dataone.org/best-practices/identify-values-are-estimated>
+Resulting AGB caluculations were reviewed by Nikki Egna, Anna Nordseth, and John Poulsen to determine potential errors and erraneous values. For example, values of shrinking AGB from 2005 to 2013 would not be possible because trees that are not cut down cannot shrink, they can only grow larger. Thus "shrinking trees" were analyzed further in order to determine the error at hand. For these trees, the original paper field data logs were referenced to check if the errors were simply transcription mistakes. If this was not the case, the field coordinator was contacted to gain further clarity.
 
