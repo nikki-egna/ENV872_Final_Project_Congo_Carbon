@@ -2,7 +2,7 @@
 setwd("~/Desktop/Classes/Spring 2020/Environmental Data Analytics/ENV872_Final_Project_Congo_Carbon")
 
 #Load packages
-pacman::p_load(ggplot2, ggspatial, cowplot, lubridate, dplyr, here, data.table, sp, devtools, rgdal, raster, maps, mapdata, maptools, reshape2, geosphere, spatstat, tidyr, spdep, sf, lwgeom)
+pacman::p_load(ggplot2, ggmap, ggspatial, cowplot, lubridate, dplyr, here, data.table, sp, devtools, rgdal, raster, maps, mapdata, maptools, reshape2, geosphere, spatstat, tidyr, spdep, sf, lwgeom)
 
 #Read in data
 plots_with_covariates <- read.csv("./Data/Processed/CongoCarbon_AGB_and_Covariates_by_Plot.csv")
@@ -22,8 +22,7 @@ ggplot(CongoCarbon_Raw_Data, aes(x = AGB13.MgE)) +
 qqnorm(CongoCarbon_Raw_Data$AGB13.MgE); qqline(CongoCarbon_Raw_Data$AGB13.MgE)
 
 
-
-######## GLM ANALYSIS #######
+############################### GLM ANALYSIS ##################################
 
 #Main effects sum '13
 AGB.main.13 <- lm(data = plots_with_covariates, sum_AGB13 ~ HFI + GlobCover + Soil + Precip_sum_2013 + Dist_Road_m + Dist_Village_m + Dist_PA_m + Dist_Saw_Mills_m)
@@ -78,7 +77,7 @@ plotcoo <- data.frame(plotcoo)
 api <- "AIzaSyABrFTwhDeG-_hVA-JJT5tSe8llJC0T_XA"
 register_google(key = api)
 
-TerrainMap_congo <- get_map(location = c(16.3, 2.2), zoom = 10, maptype = "terrain")
+TerrainMap_congo <- get_map(location = c(16.28, 2.19), zoom = 11, maptype = "terrain")
 GoogleSatMap_congo <- get_map(location = c(16.25,2.25), zoom = 10, maptype = "satellite")
 
 
@@ -153,12 +152,21 @@ vil.sf <- st_as_sf(villages)
 PAs <- st_read("/Volumes/Research/Poulsen/Remote_Sensing/Country_Data/RS_Congo/Protected Areas/Aires_protégées/Aires_protegees.shp")
 PAs.sf <- st_as_sf(PAs)
 
+### SAW MILL ###
+
+saw_mill <- st_read("/Volumes/Research/Poulsen/Remote_Sensing/Country_Data/RS_Congo/Saw_mill/Saw_mill.shp")
+st_crs(saw_mill)
+
+################################################################################################
+
 pdf(here("Output", "Roads_Villages_PA_Plot.pdf"), width = 11, height = 8.5)
 
 ggmap(TerrainMap_congo) +
   geom_sf(data= roads, color= "gray22", inherit.aes = FALSE) +
-  geom_sf(data= villages, size=4, shape=24, color= "black", fill= "orange",inherit.aes = FALSE) +
+  geom_sf(data= villages, size=4, shape=5, color= "orange",inherit.aes = FALSE) +
+  #geom_image(data=villages.test, aes(x=lon, y=lat, image=image), inherit.aes = FALSE)+ #Adds an image as a symbol
   geom_sf(data= PAs, color="darkgreen", fill="darkgreen", alpha=0.3, inherit.aes = FALSE) +
+  geom_sf(data= saw_mill, color= "red", size= 4, shape=13, inherit.aes = FALSE)+
   coord_sf() +
   annotation_scale(location = "tl") +
   annotation_north_arrow(location = "tl", which_north = "true",pad_y = unit(0.25, "in")) +
