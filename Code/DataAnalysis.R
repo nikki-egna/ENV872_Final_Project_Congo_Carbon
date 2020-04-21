@@ -1,26 +1,29 @@
+#Set working directory
+setwd("~/Desktop/Classes/Spring 2020/Environmental Data Analytics/ENV872_Final_Project_Congo_Carbon")
+
+#Load packages
+pacman::p_load(ggplot2, ggspatial, cowplot, lubridate, dplyr, here, data.table, sp, devtools, rgdal, raster, maps, mapdata, maptools, reshape2, geosphere, spatstat, tidyr, spdep, sf, lwgeom)
+
+#Read in data
+plots_with_covariates <- read.csv("./Data/Processed/CongoCarbon_AGB_and_Covariates_by_Plot.csv")
+CongoCarbon_Raw_Data <- read.csv("./Data/Raw/CongoCarbon_Raw_Data.csv")
+
+#Test for normality of AGB in 2013
+summary(CongoCarbon_Raw_Data$AGB13.MgE)
+class(CongoCarbon_Raw_Data$AGB13.MgE)
+
+Raw.Data.subsample <- sample_n(CongoCarbon_Raw_Data, 5000)
+shapiro.test((Raw.Data.subsample$AGB13.MgE))
+#Reject the null, data not normal
+
+#Graphic representation of abnormality
+ggplot(CongoCarbon_Raw_Data, aes(x = AGB13.MgE)) +
+  geom_histogram() 
+qqnorm(CongoCarbon_Raw_Data$AGB13.MgE); qqline(CongoCarbon_Raw_Data$AGB13.MgE)
+
+
+
 ######## GLM ANALYSIS #######
-
-#Main effects sum '05
-AGB.main.05 <- lm(data = plots_with_covariates, sum_AGB05 ~ HFI + GlobCover + Soil + Precip_sum_2013 + Dist_Road_m + Dist_Village_m + Dist_PA_m + Dist_Saw_Mills_m)
-summary(AGB.main.05)
-
-step(AGB.main.05)
-
-#Best model
-AGB.main.05 <- lm(formula = sum_AGB05 ~ Dist_Village_m + Dist_PA_m + Dist_Saw_Mills_m, 
-                  data = plots_with_covariates)
-summary(AGB.main.05)
-
-#Main effects sum '09
-AGB.main.09 <- lm(data = plots_with_covariates, sum_AGB09 ~ HFI + GlobCover + Soil + Precip_sum_2013 + Dist_Road_m + Dist_Village_m + Dist_PA_m + Dist_Saw_Mills_m)
-summary(AGB.main.09)
-
-step(AGB.main.09)
-
-#Best model
-AGB.main.09 <- lm(formula = sum_AGB09 ~ Dist_Village_m + Dist_PA_m + Dist_Saw_Mills_m, 
-                  data = plots_with_covariates)
-summary(AGB.main.09)
 
 #Main effects sum '13
 AGB.main.13 <- lm(data = plots_with_covariates, sum_AGB13 ~ HFI + GlobCover + Soil + Precip_sum_2013 + Dist_Road_m + Dist_Village_m + Dist_PA_m + Dist_Saw_Mills_m)
@@ -33,16 +36,6 @@ AGB.main.13 <- lm(formula = sum_AGB13 ~ Precip_sum_2013 + Dist_Road_m + Dist_Vil
                     Dist_PA_m + Dist_Saw_Mills_m, data = plots_with_covariates)
 summary(AGB.main.13)
 
-#Main effects change '05-'09
-AGB.main.0509 <- lm(data = plots_with_covariates, change0509 ~ HFI + GlobCover + Soil + Precip_sum_2013 + Dist_Road_m + Dist_Village_m + Dist_PA_m + Dist_Saw_Mills_m)
-summary(AGB.main.0509)
-
-step(AGB.main.0509)
-
-#Best model
-AGB.main.0509 <- lm(formula = sum_AGB13 ~ Precip_sum_2013 + Dist_Road_m + Dist_Village_m + 
-                      Dist_PA_m + Dist_Saw_Mills_m, data = plots_with_covariates)
-summary(AGB.main.0509)
 
 #Main effects change '09-'13
 AGB.main.0913 <- lm(data = plots_with_covariates, change0913 ~ HFI + GlobCover + Soil + Precip_sum_2013 + Dist_Road_m + Dist_Village_m + Dist_PA_m + Dist_Saw_Mills_m)
@@ -53,17 +46,6 @@ step(AGB.main.0913)
 #Best model
 AGB.main.0913 <- lm(formula = change0913 ~ GlobCover + Precip_sum_2013, data = plots_with_covariates)
 summary(AGB.main.0913)
-
-#Main effects change '05-'13
-AGB.main.0513 <- lm(data = plots_with_covariates, change0513 ~ HFI + GlobCover + Soil + Precip_sum_2013 + Dist_Road_m + Dist_Village_m + Dist_PA_m + Dist_Saw_Mills_m)
-summary(AGB.main.0513)
-
-step(AGB.main.0513)
-
-AGB.main.0513 <- lm(formula = change0513 ~ GlobCover + Precip_sum_2013 + Dist_Road_m + 
-                      Dist_Saw_Mills_m, data = plots_with_covariates)
-summary(AGB.main.0513)
-
 
 
 ######### MAPPING ##########
@@ -96,29 +78,28 @@ plotcoo <- data.frame(plotcoo)
 api <- "AIzaSyABrFTwhDeG-_hVA-JJT5tSe8llJC0T_XA"
 register_google(key = api)
 
-TerrainMap_congo <- ggmap(get_map(location = c(16.25, 2.25), zoom = 10, maptype = "terrain"))
-TerrainMap_congo + geom_point(data = plotcoo, aes(x = lon, y = lat))
-
-GoogleSatMap_congo <- ggmap(get_map(location = c(16.25,2.25), zoom = 10, maptype = "satellite"))
-GoogleSatMap_congo + geom_point(data = plotcoo, aes(x = lon, y = lat))
+TerrainMap_congo <- get_map(location = c(16.3, 2.2), zoom = 10, maptype = "terrain")
+GoogleSatMap_congo <- get_map(location = c(16.25,2.25), zoom = 10, maptype = "satellite")
 
 
 ###-------------------------------------------------------------###
-congo <- subset(world, world$name_long == "Republic of the Congo")
+
 ### Study Site Location Map ###
+congo <- subset(world, world$name_long == "Republic of the Congo")
+
 africa_map <- ggplot(data = world) +
   geom_sf() +
   geom_sf(data= congo, color="black", fill= "darkgreen") +
-  coord_sf(xlim = c(-30, 70), ylim = c(-45, 50), expand = FALSE)+
+  coord_sf(xlim = c(-21, 55), ylim = c(-45, 45), expand = FALSE)+
   #geom_rect(xmin= 10, xmax= 20.3, ymin= -6.5, ymax= 5, color="red", fill=NA, size=.7)+
   geom_rect(xmin= xRange[1], xmax= xRange[2], ymin= yRange[1], ymax= yRange[2], color="red", fill=NA, size=.8)+
   annotation_scale(location = "bl", width_hint = 0.5) +
-  annotate(geom = "label", x = 15, y = 9, label = "Republic of the Congo", 
-           color = "black", size = 3, fill= "white") +
+  annotate(geom = "label", x = 15, y = 8, label = "Republic of the Congo", 
+           color = "black", size = 5, fill= "white") +
   annotation_north_arrow(location = "bl", which_north = "true", 
                          pad_x = unit(0.2, "in"), pad_y = unit(0.35, "in"),
                          style = north_arrow_fancy_orienteering) +
-  labs(x="Longitude", y="Latitude") +
+  labs(x="", y="") +
   theme_bw()
 
 africa_map
@@ -128,72 +109,64 @@ congo_map <- ggplot(data = world) +
   geom_sf(data= congo, color="black", fill= "darkgreen") +
   coord_sf(xlim = c(9.8, 20.5), ylim = c(-7.5, 5.8), expand = FALSE)+
   geom_rect(xmin= xRange[1], xmax= xRange[2], ymin= yRange[1], ymax= yRange[2], color="red", fill=NA, size=.8)+
-  annotation_scale(location = "br", width_hint = 0.5) +
+  annotation_scale(location = "bl", width_hint = 0.5) +
   annotate(geom = "label", x = 16.2, y = 3.1, label = "Study Region", 
-           color = "black", size = 3, fill= "white") +
-  annotation_north_arrow(location = "br", which_north = "true", 
+           color = "black", size = 5, fill= "white") +
+  annotation_north_arrow(location = "bl", which_north = "true", 
                          pad_x = unit(0.2, "in"), pad_y = unit(0.35, "in"),
                          style = north_arrow_fancy_orienteering) +
-  labs(x="Longitude", y="Latitude") +
+  labs(x="", y="") +
   theme_bw()
 
 congo_map
 
-arrow <- data.frame(x1 = 3, x2 = 3, y1 = 9.5, y2 = 14.5)
-plot_grid(africa_map, congo_map, nrow = 1, align="h", axis="b", rel_widths = c(1.25,1))
+#arrow <- data.frame(x1 = 18.5, x2 = 23, y1 = 9.5, y2 = 14.5)
 
-### HFI ###
+combined_africa_congo_map <- plot_grid(africa_map, congo_map, nrow = 1, align="h", axis="b", rel_widths = c(1.06,1))
 
-#load HFI raster
-HFImap = raster("~/Documents/Congo/congo-mapping/HFI_Africa.tif") 
 
-#If connecting via the remote drive
-HFImap = raster("/Volumes/Research/Poulsen/Remote_Sensing/Continent_Africa_Data/Human Footprint Index/hfp_africa/HFI_Africa.tif") 
-plot(HFImap)
+pdf(here("Output", "Africa_Congo_Site_Map.pdf"), width = 11, height = 8.5)
 
-#Crop HFI layer to extent of Congo plots
-HFIcrop = crop(HFImap, extent(15.8,16.8,1.85,2.52))
+ggdraw(combined_africa_congo_map)+
+ geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2), data = arrow, 
+             arrow = arrow(), lineend = "round")
+dev.off()
 
-#check coordinate systems
-st_crs(HFIcrop)
-st_crs(Congo_spatial) 
-# both in lat lon so good to go
 
-### GLOBAL COVER ###
-glc <- raster("~/Documents/Congo/congo-mapping/globe_cover//GLOBCOVER_L4_200901_200912_V2.3.tif")
+### ROADS ###
 
-#If connecting via the remote drive
-glc <- raster("/Volumes/Research/Poulsen/Remote_Sensing/Global_Data/GlobCover/GLOBCOVER_L4_200901_200912_V2.3.tif")
-
-#check projection
-st_crs(glc)
-
-#Crop Global Cover layer to extent (plus a little extra) of Congo plots
-glc.crop = crop(glc, extent(15.8,16.8,1.85,2.52))
-
-### DISTANCE TO ROADS ###
-
-roads <- readOGR(dsn = path.expand("/Volumes/Research/Poulsen/Remote_Sensing/Country_Data/RS_Congo/Roads/Réseau_routier/Réseau_routier.shp"))
+roads <- st_read("/Volumes/Research/Poulsen/Remote_Sensing/Country_Data/RS_Congo/Roads/Réseau_routier/Réseau_routier.shp")
 st_crs(roads)
 roads <- spTransform(roads, CRS("+proj=longlat +datum=WGS84 +no_defs"))
 
-### DISTANCE TO VILLAGE ### 
+roads.sf <- st_as_sf(roads)
 
-villages <- readOGR(dsn = path.expand("/Volumes/Research/Poulsen/Remote_Sensing/Country_Data/RS_Congo/Villages/Localities/Localities.shp"))
+### VILLAGE ### 
 
+villages <- st_read("/Volumes/Research/Poulsen/Remote_Sensing/Country_Data/RS_Congo/Villages/Localities/Localities.shp")
 st_crs(villages)
-villages <- spTransform(villages, CRS("+proj=longlat +datum=WGS84 +no_defs"))
 
 vil.sf <- st_as_sf(villages)
 
-### DISTANCE TO WATER COURSE ###
-rivers <- readOGR(dsn = path.expand("/Volumes/Research/Poulsen/Remote_Sensing/Country_Data/RS_Congo/Water_course/Water Course/Cours_d'eau.shp"))
+### PROTECTED AREAS ###
 
-rivers.sf <- st_as_sf(rivers)
-
-### DISTANCE TO PROTECTED AREAS ###
-PAs <- readOGR(dsn = path.expand("/Volumes/Research/Poulsen/Remote_Sensing/Country_Data/RS_Congo/Protected Areas/Aires_protégées/Aires_protegees.shp"))
-
+PAs <- st_read("/Volumes/Research/Poulsen/Remote_Sensing/Country_Data/RS_Congo/Protected Areas/Aires_protégées/Aires_protegees.shp")
 PAs.sf <- st_as_sf(PAs)
 
+pdf(here("Output", "Roads_Villages_PA_Plot.pdf"), width = 11, height = 8.5)
 
+ggmap(TerrainMap_congo) +
+  geom_sf(data= roads, color= "gray22", inherit.aes = FALSE) +
+  geom_sf(data= villages, size=4, shape=24, color= "black", fill= "orange",inherit.aes = FALSE) +
+  geom_sf(data= PAs, color="darkgreen", fill="darkgreen", alpha=0.3, inherit.aes = FALSE) +
+  coord_sf() +
+  annotation_scale(location = "tl") +
+  annotation_north_arrow(location = "tl", which_north = "true",pad_y = unit(0.25, "in")) +
+  geom_point(data = plots_with_covariates, mapping = aes(x = Longitude, y = Latitude, size= sum_AGB13), color="darkblue",alpha=0.7) +
+  #scale_color_gradient(name="Distance to Road (Km)", low = "royalblue1", high = "midnightblue", na.value=NA) +
+  scale_size_continuous(name="Sum AGB 2013 (Mg)", limits=c(min(pretty(range(plots_with_covariates$sum_AGB13))),max(pretty(range(plots_with_covariates$sum_AGB13))))) +
+  labs(x= "", y= "") +
+  theme_classic() +
+  theme(legend.key = element_rect(fill = NA, colour = NA))
+
+dev.off()
