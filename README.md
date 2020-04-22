@@ -44,7 +44,6 @@ Plot	      | Study plot number (Numeric)
 Subplot	    | Subplot number within each plot (Numeric)
 Family      | Tree family name (Character)
 Species	    | Tree species name (Character)
-Tree Notes  |	Notes from the field researcher about the tree(Character)
 WD	        | Wood density (Numeric)
 DBH0_05	    | First diameter measurement in 2005 (Numeric; Centimeters)
 DBH1_05	    | Second diameter measurement in 2005 (Numeric; Centimeters)
@@ -61,22 +60,27 @@ DBH1_13	    | Second diameter measurement in 2013 (Numeric; Centimeters)
 DBH2_13	    | Third diameter measurement in 2013 (Numeric; Centimeters)
 DBH3_13	    | Fourth diameter measurement in 2013 (Numeric; Centimeters)
 DBH4_13	    | Fifth diameter measurement in 2013 (Numeric; Centimeters)
-Census Notes| Notes from the field researcher about general survey topics (Character)
+AGB05.MgE	  | AGB estimate 2005 (Numeric; milligrams)
+AGB09.MgE	  | AGB estimate 2009 (Numeric; milligrams)
+AGB13.MgE   | AGB estimate 2013 (Numeric; milligrams)
 
 ### CongoCarbon_Plot_Covariates
 
-Column Name         | Description
-------------------- | -----------
-Plot	              | Tree plot ID number (Factor)
-Latitude	          | Latitude of the plot (Numeric)
-Longitude	          | Longitude of the plot (Numeric)
-HFI	                | Human Footprint Index value at the plot location (Factor)
-GlobCover           |	GlobCover vegetation index value at the plot location (Factor)
-Precip_sum_2013	    | Annual precipitation sum for 2013 at plot location (Numeric; millimeters)
-Dist_Road_m	        | Distance from plot to the nearest road (Numeric; Meters)
-Dist_Village_m	    | Distance from plot to the nearest village (Numeric; Meters)
-sum_AGB05	          | Sum of above ground biomass within the plot for 2005 (Numeric; g/m^2)
-sum_AGB09           | Sum of above ground biomass within the plot for 2009 (Numeric; g/m^2)
+Column Name     | Description
+--------------  | -----------
+Plot	          | Tree plot ID number (Factor)
+Latitude	      | Latitude of the plot (Numeric)
+Longitude	      | Longitude of the plot (Numeric)
+HFI	            | Human Footprint Index value at the plot location (Factor)
+GlobCover       | GlobCover vegetation index value at the plot location (Factor)
+Precip_sum_2013 | Annual precipitation sum for 2013 at plot location (Numeric; millimeters)
+Soil            | Soil type index at plot location (Factor)
+Dist_Road_m	    | Distance from plot to the nearest road (Numeric; Meters)
+Dist_Village_m  | Distance from plot to the nearest village (Numeric; Meters)
+Dist_River_m    | Distance from plot to the nearest river (Numeric; Meters)
+Dist_PA_m       | Distance from plot to the nearest protected area (Numeric; Meters)
+Dist_Saw_Mills_m| Distance from plot to the nearest saw mill (Numeric; Meters)
+
 
 ### CongoCarbon_AGB_by_Plot.csv
 

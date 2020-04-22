@@ -50,10 +50,14 @@ change_AGB <- melted_AGB_by_Plot[melted_AGB_by_Plot$variable %like% "change", ]
 AGB_change_by_year <- change_AGB %>%
   group_by(variable) %>%
   summarise(sum=sum(value))
-  
+
+#Play around with visualizations
 
 ggplot()+
   geom_point(change_AGB, mapping=aes(x=Plot, y=value, group=Plot, color=variable))
+
+ggplot()+
+  geom_boxplot(subset(melted_raw_data,melted_raw_data$value<30 & melted_raw_data$Year=="2005"), mapping=aes(x=Plot, y=value, group=Plot))
 
 ggplot()+
   geom_point(sum_AGB, mapping=aes(x=Plot, y=value, group=Plot, color=variable))

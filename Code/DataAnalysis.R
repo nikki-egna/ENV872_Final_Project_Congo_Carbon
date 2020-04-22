@@ -49,8 +49,6 @@ summary(AGB.main.0913)
 
 ######### MAPPING ##########
 
-getwd()
-
 ### load packages
 pacman::p_load(ggplot2, ggmap, ggspatial,lubridate, dplyr, here, data.table, sp, devtools, rgdal, raster, maps, mapdata, maptools, geosphere, spatstat, tidyr, spdep, sf, lwgeom)
 options(digits = 3)
@@ -77,7 +75,7 @@ plotcoo <- data.frame(plotcoo)
 api <- "AIzaSyABrFTwhDeG-_hVA-JJT5tSe8llJC0T_XA"
 register_google(key = api)
 
-TerrainMap_congo <- get_map(location = c(16.28, 2.19), zoom = 11, maptype = "terrain")
+TerrainMap_congo <- get_map(location = c(16.28, 2.195), zoom = 11, maptype = "terrain")
 GoogleSatMap_congo <- get_map(location = c(16.25,2.25), zoom = 10, maptype = "satellite")
 
 
@@ -126,9 +124,8 @@ combined_africa_congo_map <- plot_grid(africa_map, congo_map, nrow = 1, align="h
 
 pdf(here("Output", "Africa_Congo_Site_Map.pdf"), width = 11, height = 8.5)
 
-ggdraw(combined_africa_congo_map)+
- geom_segment(aes(x = x1, y = y1, xend = x2, yend = y2), data = arrow, 
-             arrow = arrow(), lineend = "round")
+plot_grid(africa_map, congo_map, nrow = 1, align="h", axis="b", rel_widths = c(1.06,1))
+
 dev.off()
 
 
@@ -136,7 +133,6 @@ dev.off()
 
 roads <- st_read("/Volumes/Research/Poulsen/Remote_Sensing/Country_Data/RS_Congo/Roads/Réseau_routier/Réseau_routier.shp")
 st_crs(roads)
-roads <- spTransform(roads, CRS("+proj=longlat +datum=WGS84 +no_defs"))
 
 roads.sf <- st_as_sf(roads)
 
@@ -158,23 +154,38 @@ saw_mill <- st_read("/Volumes/Research/Poulsen/Remote_Sensing/Country_Data/RS_Co
 st_crs(saw_mill)
 
 ################################################################################################
+mytheme <- theme_classic(base_size = 14) +
+  theme(axis.text = element_text(color = "black"), 
+        legend.position = "top",
+        plot.caption = element_text(hjust = 0))
+theme_set(mytheme)
 
 pdf(here("Output", "Roads_Villages_PA_Plot.pdf"), width = 11, height = 8.5)
 
 ggmap(TerrainMap_congo) +
-  geom_sf(data= roads, color= "gray22", inherit.aes = FALSE) +
-  geom_sf(data= villages, size=4, shape=5, color= "orange",inherit.aes = FALSE) +
-  #geom_image(data=villages.test, aes(x=lon, y=lat, image=image), inherit.aes = FALSE)+ #Adds an image as a symbol
-  geom_sf(data= PAs, color="darkgreen", fill="darkgreen", alpha=0.3, inherit.aes = FALSE) +
-  geom_sf(data= saw_mill, color= "red", size= 4, shape=13, inherit.aes = FALSE)+
+  geom_sf(data= roads, aes(color="Roads"), inherit.aes = FALSE, show.legend= "line") +
+  geom_sf(data= villages, size=4, shape=23, aes(color="Village"), fill="orange", inherit.aes = FALSE, show.legend = T) +
+  geom_sf(data= PAs, aes(fill="Protected Area"), alpha=0.4, inherit.aes = FALSE, show.legend = T) +
+  geom_sf(data= saw_mill, aes(color= "Saw Mill"), size= 6, shape=13, inherit.aes = FALSE, show.legend = T)+
+  geom_point(data = plots_with_covariates, mapping = aes(x = Longitude, y = Latitude, size= sum_AGB13), color="darkblue", shape=16, alpha=0.7) +
+  scale_fill_manual(values = c("Protected Area" = "darkgreen"), name = NULL,
+                      guide = guide_legend(override.aes = list(linetype = c("blank"), 
+                                                               shape = c(NA)))) +
+  scale_colour_manual(values = c("Roads" = "gray22", "Village" = "orange", "Saw Mill"="red"), name = NULL,
+                        guide = guide_legend(override.aes = list(linetype = c("solid","blank","blank"), 
+                                                                 shape = c(NA, 13, 23)))) +
+  #scale_color_gradient(name="Distance to Road (Km)", low = "royalblue1", high = "midnightblue", na.value=NA) +
+  scale_size_continuous(name="Sum AGB 2013 (Mg)",
+                        range=c(2,15), 
+                        limits=c(min(pretty(range(plots_with_covariates$sum_AGB13))),max(pretty(range(plots_with_covariates$sum_AGB13)))),
+                        guide= guide_legend(override.aes = list(linetype="blank"))) +
   coord_sf() +
   annotation_scale(location = "tl") +
-  annotation_north_arrow(location = "tl", which_north = "true",pad_y = unit(0.25, "in")) +
-  geom_point(data = plots_with_covariates, mapping = aes(x = Longitude, y = Latitude, size= sum_AGB13), color="darkblue",alpha=0.7) +
-  #scale_color_gradient(name="Distance to Road (Km)", low = "royalblue1", high = "midnightblue", na.value=NA) +
-  scale_size_continuous(name="Sum AGB 2013 (Mg)", limits=c(min(pretty(range(plots_with_covariates$sum_AGB13))),max(pretty(range(plots_with_covariates$sum_AGB13))))) +
-  labs(x= "", y= "") +
+  annotation_north_arrow(location = "tl", which_north = "true", pad_y = unit(0.3, "in")) +
+  labs(x= "", y= "", 
+  caption= "Figure 2: Sum of above ground biomass (Mg) at each plot location in 2013. Nearby road, village, saw mill, and \nprotected area locations are plotted to visualize the relationship between these variables and the amount of above \nground biomass. Distance to roads, villages, the saw mill, and the protected area were all determined to be significant \npredictors of above ground biomass.", element_text(hjust = 0.5)) +
   theme_classic() +
-  theme(legend.key = element_rect(fill = NA, colour = NA))
+  theme(legend.background=element_blank(), plot.caption = element_text(hjust = 0, size =13, family="sans"))
 
 dev.off()
+
