@@ -1,0 +1,455 @@
+---
+output: 
+  pdf_document:
+    keep_tex: yes
+    fig_caption: yes
+    number_sections: yes
+geometry: margin=2.54cm
+title: "Factors Influencing Above Ground Biomass of Forest Plots in the Congo"
+subtitle: "https://github.com/nikki-egna/ENV872_Final_Project_Congo_Carbon"
+author: "Nikki Egna"
+abstract: "Add the abstract here"
+fontsize: 12pt
+mainfont: Times New Roman
+
+---
+
+\newpage
+\tableofcontents 
+\newpage
+\listoftables 
+\newpage
+\listoffigures 
+
+\newpage
+
+```{r setup, include=FALSE}
+# Set your working directory
+setwd("~/Desktop/Classes/Spring 2020/Environmental Data Analytics/ENV872_Final_Project_Congo_Carbon")
+
+# Load your packages
+pacman::p_load(ggplot2, ggmap, ggspatial, cowplot, lubridate, dplyr, here, data.table, sp, devtools, rgdal, raster, maps, mapdata, maptools, reshape2, captioner, geosphere, spatstat, tidyr, spdep, sf, lwgeom, RColorBrewer)
+
+# Set your ggplot theme
+mytheme <- theme_classic(base_size = 14) +
+  theme(axis.text = element_text(color = "black"), 
+        legend.position = "top",
+        plot.caption = element_text(hjust = 0))
+theme_set(mytheme)
+
+options(digits = 3)
+
+# Load your datasets
+Raw_CongoCarbon_Data <- read.csv("./Data/Raw/CongoCarbon_Raw_Data.csv")
+AGB_and_Covariates_by_Plot <- read.csv("./Data/Processed/CongoCarbon_AGB_and_Covariates_by_Plot.csv")
+CongoCarbon_Covariates <- read.csv("./Data/Raw/CongoCarbon_Plot_Covariates.csv")
+
+
+```
+
+
+
+# Rationale and Research Questions
+
+  Above ground biomass can be a predictor of overall health of a forest ecosystem. It is also important for looking at carbon storage potential of forests, which has significant implications for climate change mitigation. (Ducanson et al., 2019) This study aims to look at various environmental factors, and how they might contribute to differences in above ground biomass. The environmental factors included in this study are Human Footprint Index (HFI), GlobCover, annual precipitation, soil type, distance from the nearest road, distance from the nearest village, distance from the nearest river, distance from the nearest saw mill, and distance from the nearest protected area.
+
+**Question 1:**
+
+  How has above ground biomass changed over time at the plot locations?
+
+**Question 2:**
+
+  Which environmental factors are signicant predictors of above ground biomass?
+
+
+\newpage
+
+# Dataset Information
+
+  This repository uses data from the Poulsen Tropical Ecology Lab, and contains information on tree diameter and species from plots in the Congo. This data is being collected in order to model the amount of above ground biomass (AGB) within each plot across the study sites. Utilizing remote sensing techniques, the Poulsen Lab performed analysis to determine several covariate values at each plot, including distance to nearest road, distance to nearest village, distance to nearest river, distance to nearest protected area, Human Footprint Index, and Globcover value. This project will look at which covariates have a significant impact on AGB at the study sites.
+
+  The CongoCarbon_Raw_Data.csv was collected by the Poulsen Tropical Ecology Lab, and their on-ground team based in the Congo. This data is not public facing, and access was granted through Dr. John Poulsen. The CongoCarbon_AGB_by_Plot.csv was created by John Poulsen, Anna Nordseth, and Nikki Egna based on the raw data. The covariate data (CongoCarbon_Plot_Covariates.csv) was created by Nikki Egna in March of 2020, and the data it utilizes was obtained from the following sources: Human Footprint Index was derived from Wildlife Conservation Society (WCS), Center for International Earth Science Information Network (CIESIN), and Columbia University and was accessed in December of 2019. The GlobCover raster was downloaded from the ESA Globcover 2005 Project, led by MEDIAS-France/POSTEL, in December of 2019. Precipitation data was obtained from the Climate Hazards group Infrared Precipitation with Stations (CHIRPS) in December of 2019. The roads, river, soil, saw mill, and villages data comes from the Ministère de l’Économie Forestière CNIAF_MEFDD (https://cog.forest-atlas.org), accessed in April, 2020.
+  
+## Metadata
+
+### CongoCarbon_Raw_data.csv
+
+Column Name | Description
+----------- | -----------
+Tree ID	    | Identification number assigned to the unique tree (Numeric)
+Tag No      | Secondary tree identification number (Numeric)
+Plot	      | Study plot number (Numeric)
+Subplot	    | Subplot number within each plot (Numeric)
+Family      | Tree family name (Character)
+Species	    | Tree species name (Character)
+WD	        | Wood density (Numeric)
+DBH0_05	    | First diameter measurement in 2005 (Numeric; Centimeters)
+DBH1_05	    | Second diameter measurement in 2005 (Numeric; Centimeters)
+DBH2_05	    | Third diameter measurement in 2005 (Numeric; Centimeters)
+DBH3_05	    | Fourth diameter measurement in 2005 (Numeric; Centimeters)
+DBH4_05	    | Fifth diameter measurement in 2005 (Numeric; Centimeters)
+DBH0_09	    | First diameter measurement in 2009 (Numeric; Centimeters)
+DBH1_09	    | Second diameter measurement in 2009 (Numeric; Centimeters)
+DBH2_09	    | Third diameter measurement in 2009 (Numeric; Centimeters)
+DBH3_09	    | Fourth diameter measurement in 2009 (Numeric; Centimeters)
+DBH4_09   	| Fifth diameter measurement in 2009 (Numeric; Centimeters)
+DBH0_13	    | First diameter measurement in 2013 (Numeric; Centimeters)
+DBH1_13	    | Second diameter measurement in 2013 (Numeric; Centimeters)
+DBH2_13	    | Third diameter measurement in 2013 (Numeric; Centimeters)
+DBH3_13	    | Fourth diameter measurement in 2013 (Numeric; Centimeters)
+DBH4_13	    | Fifth diameter measurement in 2013 (Numeric; Centimeters)
+AGB05.MgE	  | AGB estimate 2005 (Numeric; milligrams)
+AGB09.MgE	  | AGB estimate 2009 (Numeric; milligrams)
+AGB13.MgE   | AGB estimate 2013 (Numeric; milligrams)
+
+
+### CongoCarbon_Plot_Covariates.csv
+
+Column Name     | Description
+--------------  | -----------
+Plot	          | Tree plot ID number (Factor)
+Latitude	      | Latitude of the plot (Numeric)
+Longitude	      | Longitude of the plot (Numeric)
+HFI	            | Human Footprint Index value at the plot location (Factor)
+GlobCover       | GlobCover vegetation index value at the plot location (Factor)
+Precip_sum_2013 | Annual precipitation sum for 2013 at plot location (Numeric; millimeters)
+Soil            | Soil type index at plot location (Factor)
+Dist_Road_m	    | Distance from plot to the nearest road (Numeric; Meters)
+Dist_Village_m  | Distance from plot to the nearest village (Numeric; Meters)
+Dist_River_m    | Distance from plot to the nearest river (Numeric; Meters)
+Dist_PA_m       | Distance from plot to the nearest protected area (Numeric; Meters)
+Dist_Saw_Mills_m| Distance from plot to the nearest saw mill (Numeric; Meters)
+
+
+\newpage
+
+# Exploratory Analysis 
+
+## Raw Data
+
+```{r exploratory_analysis1, echo=T, results='hide'}
+#Check first few rows of data and the structure of the data
+head(Raw_CongoCarbon_Data)
+str(Raw_CongoCarbon_Data)
+
+#Check class of necessary columns
+lapply(Raw_CongoCarbon_Data, class)
+
+#Change necessary classes
+Raw_CongoCarbon_Data$Plot <- as.factor(Raw_CongoCarbon_Data$Plot)
+
+#Check for NAs
+anyNA(Raw_CongoCarbon_Data$AGB05.MgE)
+anyNA(Raw_CongoCarbon_Data$AGB09.MgE)
+anyNA(Raw_CongoCarbon_Data$AGB13.MgE)
+
+#Look at number of NA values
+nrow(subset(Raw_CongoCarbon_Data, is.na(AGB05.MgE)))
+nrow(subset(Raw_CongoCarbon_Data, is.na(AGB09.MgE)))
+nrow(subset(Raw_CongoCarbon_Data, is.na(AGB13.MgE)))
+```
+
+## Covariate Data
+
+```{r exploratory_analysis2, echo=TRUE, results='hide'}
+
+head(CongoCarbon_Covariates)
+str(CongoCarbon_Covariates)
+
+#Check the class for all columns in CongoCarbon_Covariates
+lapply(CongoCarbon_Covariates, class)
+```
+
+\newpage
+
+# Analysis
+
+**Wrangle raw datasets to create a final dataframe with covariate values, sum of AGB for each year, and the change in AGB by year for each plot location**
+
+```{r datawrangling, include=T, warning=F}
+
+#Create columns with the sum AGB by plot for each year '05, '09, '13
+AGB_by_Plot <- Raw_CongoCarbon_Data %>%
+  group_by(Plot) %>%
+  summarize(sum_AGB05 = sum(AGB05.MgE, na.rm = TRUE), 
+            sum_AGB09 = sum(AGB09.MgE, na.rm = TRUE), 
+            sum_AGB13 = sum(AGB13.MgE, na.rm = TRUE))
+
+#Create columns for change in AGB from '05-'09, '09-'13, & '05-'13
+AGB_by_Plot$change0509 <- with(AGB_by_Plot, sum_AGB09 - sum_AGB05)
+AGB_by_Plot$change0913 <- with(AGB_by_Plot, sum_AGB13 - sum_AGB09)
+AGB_by_Plot$change0513 <- with(AGB_by_Plot, sum_AGB13 - sum_AGB05)
+
+#Combine AGB_by_Plot and CongoCarbon_Covariates by plot
+AGB_and_Covariates_by_Plot <- 
+  merge(CongoCarbon_Covariates, AGB_by_Plot, by="Plot")
+
+```
+
+*Prepare data in correct format for analysis and graphing*
+```{r datawrangling2, include=T, warning=F}
+#Change dataframe from horizontal to vertical
+melted_AGB_by_Plot <- melt(AGB_by_Plot, id=c("Plot"))
+#Create a column for year
+melted_AGB_by_Plot$Year <- melted_AGB_by_Plot$variable
+melted_AGB_by_Plot$Year <- gsub("sum_AGB05","2005", 
+                                melted_AGB_by_Plot$Year, fixed=T)
+melted_AGB_by_Plot$Year <- gsub("sum_AGB09","2009", 
+                                melted_AGB_by_Plot$Year, fixed=T)
+melted_AGB_by_Plot$Year <- gsub("sum_AGB13","2013", 
+                                melted_AGB_by_Plot$Year, fixed=T)
+
+#Create dataframe for the sum of AGB by plot
+sum_AGB_by_plot <- melted_AGB_by_Plot[melted_AGB_by_Plot$variable 
+                                      %like% "sum", ]
+#Create dataframe for the change in AGB by plot
+change_AGB_by_plot <- melted_AGB_by_Plot[melted_AGB_by_Plot$variable 
+                                         %like% "change", ]
+#Create dataframe for the change in AGB by year
+AGB_change_by_year <- change_AGB_by_plot %>%
+  group_by(variable) %>%
+  summarise(sum=sum(value))
+
+#Raw data
+#Add column for percent change
+Raw_CongoCarbon_Data$Percent_Change_0513 <-
+  ((Raw_CongoCarbon_Data$AGB13-Raw_CongoCarbon_Data$AGB05)/
+     Raw_CongoCarbon_Data$AGB05.MgE)*100
+
+#Subset necessary data
+Raw_data_subset <- Raw_CongoCarbon_Data %>%
+  dplyr::select(Tree.ID, Plot, AGB05.MgE, AGB09.MgE, AGB13.MgE)
+
+#Melt data
+melted_raw_data <- melt(Raw_data_subset, id=c("Tree.ID","Plot"))
+
+#Create a column for year
+melted_raw_data$Year <- melted_raw_data$variable
+melted_raw_data$Year <- gsub("AGB05.MgE","2005", 
+                             melted_raw_data$Year, fixed=T)
+melted_raw_data$Year <- gsub("AGB09.MgE","2009", 
+                             melted_raw_data$Year, fixed=T)
+melted_raw_data$Year <- gsub("AGB13.MgE","2013", 
+                             melted_raw_data$Year, fixed=T)
+
+```
+
+
+
+## Data visualization
+
+
+
+
+```{r data_visualization, echo=F, warning=F, fig.cap="Relationship of the changes in total above ground biomass at each plot between 2005, 2009, and 2013."}
+colourCount = length(unique(melted_AGB_by_Plot$Plot))
+getPalette = colorRampPalette(brewer.pal(9, "Set1"))
+
+ggplot(sum_AGB_by_plot)+
+  geom_line(mapping=aes(x=Year, y=value, group=Plot, color=Plot)) +
+  scale_color_manual(values=getPalette(colourCount)) +
+  labs(x="Year", y="Sum AGB (Mg)") +
+  theme(legend.position="bottom") +
+  guides(color=guide_legend(nrow=3))
+
+```
+
+```{r dataviz_2013, echo=F, warning=F, fig.cap="Relationship between above ground biomass at each plot in 2013."}
+ggplot(subset(melted_raw_data, Year=="2013"))+
+  geom_violin(mapping=aes(x=Plot, y=value, color=Plot)) +
+  scale_color_hue(h = c(180, 270)) +
+  labs(x="Plot", y="AGB (Mg)") +
+  theme(legend.position = "none")
+```
+
+```{r dataviz_sum_2013, echo=F, warning=F, fig.cap="Relationship between total above ground biomass at each plot in 2013."}
+ggplot(subset(melted_AGB_by_Plot, Year=="2013"))+
+  geom_point(mapping=aes(x=Plot, y=value, color=Plot)) +
+  scale_color_hue(h = c(180, 270)) +
+  labs(x="Plot", y="Sum AGB (Mg)") +
+  theme(legend.position = "none")
+
+
+```
+
+
+## Question 1: Is there significant difference in AGB between each of the years of data collection (2005, 2009, and 2013)?
+
+```{r glm_analysis, include=T, warning=F}
+AGB.by.year.model <- lm(data=melted_raw_data, value ~ as.factor(Year))
+summary(AGB.by.year.model)
+
+TukeyHSD(aov(data=melted_raw_data, value ~ as.factor(Year)))
+
+```
+
+## Question 2: Which environmental factors are significant predictors of AGB?
+
+```{r glm_analysis2, include=T, warning=F}
+#Main effects sum '13
+AGB.main.13 <- lm(data = AGB_and_Covariates_by_Plot, sum_AGB13 ~ 
+                    as.factor(HFI) + as.factor(GlobCover) + as.factor(Soil) +
+                    Precip_sum_2013 + Dist_Road_m + Dist_Village_m + Dist_PA_m + 
+                    Dist_Saw_Mills_m)
+#summary(AGB.main.13)
+
+#step(AGB.main.13)
+
+#Best model
+AGB.main.13 <- lm(formula = sum_AGB13 ~ Precip_sum_2013 + 
+                    Dist_Road_m + Dist_Village_m + Dist_PA_m + 
+                    Dist_Saw_Mills_m, data = AGB_and_Covariates_by_Plot)
+AGB.main.13
+summary(AGB.main.13)
+```
+
+```{r modelfit, echo=F, warning=F, fig.cap="Fit of the model that represents the effect of total precipitation, distance to the nearest road, distance to the nearest  village, distance to the nearest protected area, and distance to the nearest saw mill on total AGB at the plots in 2013"}
+par(mfrow=c(2,2))
+plot(AGB.main.13)
+```
+\newpage
+
+```{r mapping1, echo=F, warning=F, fig.cap="Map displaying the location of the forest plots within the Republic of Congo, Africa."}
+plotcoo <- AGB_and_Covariates_by_Plot[,c("Plot","Latitude","Longitude")]
+
+plotcoo$Plot <- as.character(plotcoo$Plot)
+sapply(plotcoo, class)
+
+latlongProj = "+proj=longlat +ellps=WGS84 +no_defs"
+
+
+Congo_spatial = SpatialPoints(coords = as.matrix(plotcoo[,c("Longitude", "Latitude")]), proj4string = CRS(latlongProj))
+
+#set x-y limits for all plots
+xRange = range(plotcoo$Longitude)
+yRange = range(plotcoo$Latitude)
+
+
+#GOOGLE MAPS
+
+plotcoo <- data.frame(plotcoo)
+
+api <- "AIzaSyABrFTwhDeG-_hVA-JJT5tSe8llJC0T_XA"
+register_google(key = api)
+
+TerrainMap_congo <- get_map(location = c(16.28, 2.195), zoom = 11, maptype = "terrain")
+GoogleSatMap_congo <- get_map(location = c(16.25,2.25), zoom = 10, maptype = "satellite")
+
+
+###-------------------------------------------------------------###
+
+### Study Site Location Map ###
+congo <- subset(world, world$name_long == "Republic of the Congo")
+
+africa_map <- ggplot(data = world) +
+  geom_sf() +
+  geom_sf(data= congo, color="black", fill= "darkgreen") +
+  coord_sf(xlim = c(-21, 55), ylim = c(-45, 45), expand = FALSE)+
+  #geom_rect(xmin= 10, xmax= 20.3, ymin= -6.5, ymax= 5, color="red", fill=NA, size=.7)+
+  geom_rect(xmin= xRange[1], xmax= xRange[2], ymin= yRange[1], ymax= yRange[2], color="red", fill=NA, size=.8)+
+  annotation_scale(location = "bl", width_hint = 0.5) +
+  annotate(geom = "label", x = 15, y = 8, label = "Republic of the Congo", 
+           color = "black", size = 5, fill= "white") +
+  annotation_north_arrow(location = "bl", which_north = "true", 
+                         pad_x = unit(0.2, "in"), pad_y = unit(0.35, "in"),
+                         style = north_arrow_fancy_orienteering) +
+  labs(x="", y="") +
+  theme_bw()
+
+
+congo_map <- ggplot(data = world) +
+  geom_sf() +
+  geom_sf(data= congo, color="black", fill= "darkgreen") +
+  coord_sf(xlim = c(9.8, 20.5), ylim = c(-7.5, 5.8), expand = FALSE)+
+  geom_rect(xmin= xRange[1], xmax= xRange[2], ymin= yRange[1], ymax= yRange[2], color="red", fill=NA, size=.8)+
+  annotation_scale(location = "bl", width_hint = 0.5) +
+  annotate(geom = "label", x = 16.2, y = 3.1, label = "Study Region", 
+           color = "black", size = 5, fill= "white") +
+  annotation_north_arrow(location = "bl", which_north = "true", 
+                         pad_x = unit(0.2, "in"), pad_y = unit(0.35, "in"),
+                         style = north_arrow_fancy_orienteering) +
+  labs(x="", y="") +
+  theme_bw()
+
+
+#arrow <- data.frame(x1 = 18.5, x2 = 23, y1 = 9.5, y2 = 14.5)
+
+combined_africa_congo_map <- plot_grid(africa_map, congo_map, nrow = 1, align="h", axis="b", rel_widths = c(1.06,1))
+
+#pdf(here("Output", "Africa_Congo_Site_Map.pdf"), width = 11, height = 8.5)
+
+plot_grid(africa_map, congo_map, nrow = 1, align="h", axis="b", rel_widths = c(1.06,1))
+
+#dev.off()
+
+
+```
+
+```{r shapefiles, include=F, warning=F}
+### ROADS ###
+
+roads <- st_read("./Data/Raw/Reseau_routier/Reseau_routier.shp")
+st_crs(roads)
+
+roads.sf <- st_as_sf(roads)
+
+### VILLAGE ### 
+
+villages <- st_read("./Data/Raw/Localities/Localities.shp")
+st_crs(villages)
+
+vil.sf <- st_as_sf(villages)
+
+### PROTECTED AREAS ###
+
+PAs <- st_read("./Data/Raw/Aires_protegees/Aires_protegees.shp")
+PAs.sf <- st_as_sf(PAs)
+
+### SAW MILL ###
+
+saw_mill <- st_read("./Data/Raw/Saw_mill/Saw_mill.shp")
+st_crs(saw_mill)
+```
+
+```{r mapping2, echo=F, , warning=F, fig.width=11, fig.height=8.5, fig.cap="Sum of above ground biomass (Mg) at each plot location in 2013. Nearby road, village, saw mill, and protected area locations are plotted to visualize the relationship between these variables and the amount of above ground biomass."}
+#pdf(here("Output", "Roads_Villages_PA_Plot.pdf"), width = 11, height = 8.5)
+
+ggmap(TerrainMap_congo) +
+  geom_sf(data= roads, aes(color="Roads"), inherit.aes = FALSE, show.legend= "line") +
+  geom_sf(data= villages, size=4, shape=23, aes(color="Village"), fill="orange", inherit.aes = FALSE, show.legend = T) +
+  geom_sf(data= PAs, aes(fill="Protected Area"), alpha=0.4, inherit.aes = FALSE, show.legend = T) +
+  geom_sf(data= saw_mill, aes(color= "Saw Mill"), size= 6, shape=13, inherit.aes = FALSE, show.legend = T)+
+  geom_point(data = AGB_and_Covariates_by_Plot, mapping = aes(x = Longitude, y = Latitude, size= sum_AGB13), color="darkblue", shape=16, alpha=0.7) +
+  scale_fill_manual(values = c("Protected Area" = "darkgreen"), name = NULL,
+                      guide = guide_legend(override.aes = list(linetype = c("blank"), 
+                                                               shape = c(NA)))) +
+  scale_colour_manual(values = c("Roads" = "gray22", "Village" = "orange", "Saw Mill"="red"), name = NULL,
+                        guide = guide_legend(override.aes = list(linetype = c("solid","blank","blank"), 
+                                                                 shape = c(NA, 13, 23)))) +
+  #scale_color_gradient(name="Distance to Road (Km)", low = "royalblue1", high = "midnightblue", na.value=NA) +
+  scale_size_continuous(name="Sum AGB 2013 (Mg)",
+                        range=c(2,15), 
+                        limits=c(min(pretty(range(AGB_and_Covariates_by_Plot$sum_AGB13))),max(pretty(range(AGB_and_Covariates_by_Plot$sum_AGB13)))),
+                        guide= guide_legend(override.aes = list(linetype="blank"))) +
+  coord_sf() +
+  annotation_scale(location = "tl") +
+  annotation_north_arrow(location = "tl", which_north = "true", pad_y = unit(0.3, "in")) +
+  labs(x= "", y= "") +
+  theme_classic() +
+  theme(legend.background=element_blank())
+
+#dev.off()
+
+```
+
+\newpage
+
+# Summary and Conclusions
+
+
+\newpage
+
+# References
+
+Duncanson, L., Armston, J., Disney, M. et al. The Importance of Consistent Global Forest Aboveground Biomass Product Validation. Surv Geophys 40, 979–999 (2019). https://doi.org/10.1007/s10712-019-09538-8
+<add references here if relevant, otherwise delete this section> 
