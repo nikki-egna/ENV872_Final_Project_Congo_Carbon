@@ -8,7 +8,6 @@ geometry: margin=2.54cm
 title: "Factors Influencing Above Ground Biomass of Forest Plots in the Congo"
 subtitle: "https://github.com/nikki-egna/ENV872_Final_Project_Congo_Carbon"
 author: "Nikki Egna"
-abstract: "Add the abstract here"
 fontsize: 12pt
 mainfont: Times New Roman
 
@@ -16,8 +15,6 @@ mainfont: Times New Roman
 
 \newpage
 \tableofcontents 
-\newpage
-\listoftables 
 \newpage
 \listoffigures 
 
@@ -28,7 +25,7 @@ mainfont: Times New Roman
 setwd("~/Desktop/Classes/Spring 2020/Environmental Data Analytics/ENV872_Final_Project_Congo_Carbon")
 
 # Load your packages
-pacman::p_load(ggplot2, ggmap, ggspatial, cowplot, lubridate, dplyr, here, data.table, sp, devtools, rgdal, raster, maps, mapdata, maptools, reshape2, captioner, geosphere, spatstat, tidyr, spdep, sf, lwgeom, RColorBrewer)
+pacman::p_load(ggplot2, ggmap, ggspatial, cowplot, lubridate, dplyr, here, data.table, sp, devtools, rgdal, raster, maps, mapdata, bookdown, maptools, reshape2, captioner, geosphere, spatstat, tidyr, spdep, sf, lwgeom, RColorBrewer)
 
 # Set your ggplot theme
 mytheme <- theme_classic(base_size = 14) +
@@ -44,14 +41,13 @@ Raw_CongoCarbon_Data <- read.csv("./Data/Raw/CongoCarbon_Raw_Data.csv")
 AGB_and_Covariates_by_Plot <- read.csv("./Data/Processed/CongoCarbon_AGB_and_Covariates_by_Plot.csv")
 CongoCarbon_Covariates <- read.csv("./Data/Raw/CongoCarbon_Plot_Covariates.csv")
 
-
 ```
 
 
 
 # Rationale and Research Questions
 
-  Above ground biomass can be a predictor of overall health of a forest ecosystem. It is also important for looking at carbon storage potential of forests, which has significant implications for climate change mitigation. (Ducanson et al., 2019) This study aims to look at various environmental factors, and how they might contribute to differences in above ground biomass. The environmental factors included in this study are Human Footprint Index (HFI), GlobCover, annual precipitation, soil type, distance from the nearest road, distance from the nearest village, distance from the nearest river, distance from the nearest saw mill, and distance from the nearest protected area.
+  Above ground biomass (AGB) is all biomass above the soil, including woody and herbaceous vegetation, stems, stumps, branches, bark, and foliage. Above ground biomass can be a predictor of overall health of a forest ecosystem. It is also important for looking at carbon storage potential of forests, which has significant implications for climate change mitigation. (Ducanson et al., 2019) Researchers in forestry, ecology, and agriculture often adopt the "plot method" for studying AGB by estimating and monitoring production or changes in carbon stocks. (Ducanson et al., 2019) The study conducted by the Poulsen Tropical Ecology Lab utilizes this "plot method" to estimate AGB from plots in the Republic of Congo, Africa. The Poulsen Lab estimated AGB using methodology from Chave et al. (2014). This study utilizes these AGB estimates to look at various environmental factors (covariates), and how they might contribute to differences in AGB at each forest plot. The environmental factors included in this study are Human Footprint Index (HFI), GlobCover, annual precipitation, soil type, distance from the nearest road, distance from the nearest village, distance from the nearest river, distance from the nearest saw mill, and distance from the nearest protected area. This study also quantifies the change in AGB between the measurement collection years of 2005, 2009, and 2013.
 
 **Question 1:**
 
@@ -127,6 +123,8 @@ Dist_Saw_Mills_m| Distance from plot to the nearest saw mill (Numeric; Meters)
 
 ## Raw Data
 
+  To explore the raw data, the first few rows and the structure of the dataframe were analyzed. The class of each of the columns was also assesed, and any incorrect column classes were corrected. For this analysis, only the 'Plot' column needed to be changed from numeric to a factor variable. The number of empty rows within the AGB measurement columns were also checked and quantified. It is critical to know if there were any missing measurements. Approximately 10% of the data had missing values. The number of missing measurements, was reported back to The Poulsen Tropical Ecology Lab. It should be noted that the presence of missing data may alter the accuracy of the analysis presented here.
+
 ```{r exploratory_analysis1, echo=T, results='hide'}
 #Check first few rows of data and the structure of the data
 head(Raw_CongoCarbon_Data)
@@ -147,9 +145,14 @@ anyNA(Raw_CongoCarbon_Data$AGB13.MgE)
 nrow(subset(Raw_CongoCarbon_Data, is.na(AGB05.MgE)))
 nrow(subset(Raw_CongoCarbon_Data, is.na(AGB09.MgE)))
 nrow(subset(Raw_CongoCarbon_Data, is.na(AGB13.MgE)))
+
+#Proportion of NAs 
+(nrow(subset(Raw_CongoCarbon_Data, is.na(AGB05.MgE)))/nrow(Raw_CongoCarbon_Data))*100
 ```
 
 ## Covariate Data
+
+The dataset containing the covariate values at each plot was analyzed similarly to the raw data. The beginning rows of the dataset, as well as the structure, and then the class of each column were assessed.
 
 ```{r exploratory_analysis2, echo=TRUE, results='hide'}
 
@@ -160,11 +163,10 @@ str(CongoCarbon_Covariates)
 lapply(CongoCarbon_Covariates, class)
 ```
 
-\newpage
-
 # Analysis
 
-**Wrangle raw datasets to create a final dataframe with covariate values, sum of AGB for each year, and the change in AGB by year for each plot location**
+  The raw data was wrangled in order to obtain the AGB sum of all the trees within each plot. Columns for the change in AGB between the years were created by subtracting the sum AGB of the following measurement year from the sum AGB from the prior measurement year. This created a data frame (AGB_by_Plot) with the plot number and the total sum AGB at each plot for the years 2005, 2009, and 2013, as well as the change in AGB from 2005-2009, 2009-2013, and 2005-2013. The AGB_by_Plot data from was then merged with the raw covariates data to create one final dataframe. This final data frame includes plot number, all covariate values at each plot, the sum AGB for each year at each plot, and the change in AGB from one measurement year to another for each plot. This data frame is saved as CongoCarbon_AGB_and_Covariates_by_Plot.csv in the Data/Processed directory of the repository.
+
 
 ```{r datawrangling, include=T, warning=F}
 
@@ -186,7 +188,8 @@ AGB_and_Covariates_by_Plot <-
 
 ```
 
-*Prepare data in correct format for analysis and graphing*
+  Further data wrangling was necessary in order to graph this data. The dataframe created above (AGB_and_Covariates_by_Plot) is in horizontal form. In order to move forward with this analysis, the data must be in vertical form, so the melt() function was implemented to complete this task. Through use of this tool, a new dataframe (melted_AGB_by_Plot) was created, containing columns for plot, year, the variable (either sum AGB or change in AGB) and the AGB value. Rather than having multiple columns for each measurement year of AGB and multiple columns for the change in AGB measurements, there is now one column for AGB value, one column for year, and one column for variable. The melted dataframe was then subsetted to make two new sets of data, one for the sum values of AGB, and one for the values of change in AGB. The same process was applied to the original raw data (Raw_CongoCarbon_data) by selecting the necessary columns and applying the melt function.
+
 ```{r datawrangling2, include=T, warning=F}
 #Change dataframe from horizontal to vertical
 melted_AGB_by_Plot <- melt(AGB_by_Plot, id=c("Plot"))
@@ -210,12 +213,6 @@ AGB_change_by_year <- change_AGB_by_plot %>%
   group_by(variable) %>%
   summarise(sum=sum(value))
 
-#Raw data
-#Add column for percent change
-Raw_CongoCarbon_Data$Percent_Change_0513 <-
-  ((Raw_CongoCarbon_Data$AGB13-Raw_CongoCarbon_Data$AGB05)/
-     Raw_CongoCarbon_Data$AGB05.MgE)*100
-
 #Subset necessary data
 Raw_data_subset <- Raw_CongoCarbon_Data %>%
   dplyr::select(Tree.ID, Plot, AGB05.MgE, AGB09.MgE, AGB13.MgE)
@@ -234,12 +231,29 @@ melted_raw_data$Year <- gsub("AGB13.MgE","2013",
 
 ```
 
-
+\newpage
 
 ## Data visualization
 
+  Figure 1 shows histograms of the AGB values of the raw data for each year. This provides general insight about the data, such as the normality, whether there are outliers present, and also compares the values of AGB measurements for each of the years. We can see that, for all years, a vast majority of the measurements are very low (between 0 and 10 Mg), but there are a few significant outliers (Figure 1).
 
+```{r histograms, echo= F, fig.height= 11, fig.width= 12, fig.cap="Histogram showing the distribution of AGB measurements of the trees for 2005, 2009, and 2013."}
+Year2005 <- melted_raw_data[melted_raw_data$Year=="2005",]
+Year2009 <- melted_raw_data[melted_raw_data$Year=="2009",]
+Year2013 <- melted_raw_data[melted_raw_data$Year=="2013",]
 
+par(mfrow=c(3,1))
+hist2005 <- hist(Year2005$value, main="AGB Values in 2005", breaks= 50, xlab="AGB", 
+                 xlim=c(0,70), col="darkslategray3")
+hist2009 <- hist(Year2009$value, main="AGB Values in 2009", breaks= 50, xlab="AGB", 
+                 xlim=c(0,70), col="darkslategray3")
+hist2013 <- hist(Year2013$value, main="AGB Values in 2013", breaks= 50, xlab="AGB", 
+                 xlim=c(0,70), col="darkslategray3")
+dev.off()
+```
+\newpage
+
+  In order to further vizualize how AGB may differ between the measurements years, a line graph represents the change in the sum of AGB of each plot over time (Figure 2). Each line represents a different plot number. Here, we can speculate that there was not much change in AGB from 2005 to 2009, however there was significant change from 2009 to 2013.
 
 ```{r data_visualization, echo=F, warning=F, fig.cap="Relationship of the changes in total above ground biomass at each plot between 2005, 2009, and 2013."}
 colourCount = length(unique(melted_AGB_by_Plot$Plot))
@@ -254,66 +268,49 @@ ggplot(sum_AGB_by_plot)+
 
 ```
 
-```{r dataviz_2013, echo=F, warning=F, fig.cap="Relationship between above ground biomass at each plot in 2013."}
-ggplot(subset(melted_raw_data, Year=="2013"))+
-  geom_violin(mapping=aes(x=Plot, y=value, color=Plot)) +
-  scale_color_hue(h = c(180, 270)) +
-  labs(x="Plot", y="AGB (Mg)") +
-  theme(legend.position = "none")
+  The following violin plot shows the distribution of AGB measurements within each plot for 2005, 2009, and 2013 (Figure 3). Similar to the histogram, we can see that a majority of the values are low measurements, with the presence of significant outliers. We can see here the differences in AGB values not only between the different trees within each plots (shown by the long tails), however we also see that there are differences between the overall sum AGB from one plot to another.
+
+```{r dataviz_2013, echo=F, warning=F, fig.height= 15, fig.width= 11, fig.cap="Relationship between above ground biomass at each plot in 2005, 2009, and 2013."}
+
+violin2013 <- ggplot(subset(melted_raw_data, Year=="2013"))+
+  geom_violin(mapping=aes(x=Plot, y=value, color=Year), color="darkslategray3") +
+  labs(x="Plot", y="AGB (Mg)")
+
+violin2009 <- ggplot(subset(melted_raw_data, Year=="2009"))+
+  geom_violin(mapping=aes(x=Plot, y=value, color=Year), color="darkslategrey") +
+  labs(x="Plot", y="AGB (Mg)")
+
+
+violin2005 <- ggplot(subset(melted_raw_data, Year=="2005"))+
+  geom_violin(mapping=aes(x=Plot, y=value, color=Year), color="darkturquoise") +
+  labs(x="Plot", y="AGB (Mg)")
+
+plot_grid(violin2005, violin2009, violin2013, nrow = 3, align="v")
+
 ```
 
+\newpage
+
+  Figure 4 displays the sum AGB of all trees within each plot to vizualize the differences in AGB from one plot to another. For simplicity, the measurements collected in 2013 were the sole focus. Here we can more difinitively see the differences between total AGB at each plot. Where some plots, for example plot 1, had total AGB as low as 100 Mg, plot 22 had a total AGB of over 500 Mg (Figure 4). These differences prompted the second study question: what environmental variables may be affecting the amount of total AGB within a plot.
+
+
 ```{r dataviz_sum_2013, echo=F, warning=F, fig.cap="Relationship between total above ground biomass at each plot in 2013."}
+
 ggplot(subset(melted_AGB_by_Plot, Year=="2013"))+
   geom_point(mapping=aes(x=Plot, y=value, color=Plot)) +
   scale_color_hue(h = c(180, 270)) +
   labs(x="Plot", y="Sum AGB (Mg)") +
   theme(legend.position = "none")
 
-
 ```
 
-
-## Question 1: Is there significant difference in AGB between each of the years of data collection (2005, 2009, and 2013)?
-
-```{r glm_analysis, include=T, warning=F}
-AGB.by.year.model <- lm(data=melted_raw_data, value ~ as.factor(Year))
-summary(AGB.by.year.model)
-
-TukeyHSD(aov(data=melted_raw_data, value ~ as.factor(Year)))
-
-```
-
-## Question 2: Which environmental factors are significant predictors of AGB?
-
-```{r glm_analysis2, include=T, warning=F}
-#Main effects sum '13
-AGB.main.13 <- lm(data = AGB_and_Covariates_by_Plot, sum_AGB13 ~ 
-                    as.factor(HFI) + as.factor(GlobCover) + as.factor(Soil) +
-                    Precip_sum_2013 + Dist_Road_m + Dist_Village_m + Dist_PA_m + 
-                    Dist_Saw_Mills_m)
-#summary(AGB.main.13)
-
-#step(AGB.main.13)
-
-#Best model
-AGB.main.13 <- lm(formula = sum_AGB13 ~ Precip_sum_2013 + 
-                    Dist_Road_m + Dist_Village_m + Dist_PA_m + 
-                    Dist_Saw_Mills_m, data = AGB_and_Covariates_by_Plot)
-AGB.main.13
-summary(AGB.main.13)
-```
-
-```{r modelfit, echo=F, warning=F, fig.cap="Fit of the model that represents the effect of total precipitation, distance to the nearest road, distance to the nearest  village, distance to the nearest protected area, and distance to the nearest saw mill on total AGB at the plots in 2013"}
-par(mfrow=c(2,2))
-plot(AGB.main.13)
-```
 \newpage
 
-```{r mapping1, echo=F, warning=F, fig.cap="Map displaying the location of the forest plots within the Republic of Congo, Africa."}
+```{r mapping1, echo=F, warning=F, message=F, fig.cap="Map displaying the location of the forest plots within the Republic of Congo, Africa."}
 plotcoo <- AGB_and_Covariates_by_Plot[,c("Plot","Latitude","Longitude")]
 
 plotcoo$Plot <- as.character(plotcoo$Plot)
-sapply(plotcoo, class)
+#sapply(plotcoo, class)
 
 latlongProj = "+proj=longlat +ellps=WGS84 +no_defs"
 
@@ -374,8 +371,6 @@ congo_map <- ggplot(data = world) +
 
 #arrow <- data.frame(x1 = 18.5, x2 = 23, y1 = 9.5, y2 = 14.5)
 
-combined_africa_congo_map <- plot_grid(africa_map, congo_map, nrow = 1, align="h", axis="b", rel_widths = c(1.06,1))
-
 #pdf(here("Output", "Africa_Congo_Site_Map.pdf"), width = 11, height = 8.5)
 
 plot_grid(africa_map, congo_map, nrow = 1, align="h", axis="b", rel_widths = c(1.06,1))
@@ -384,6 +379,7 @@ plot_grid(africa_map, congo_map, nrow = 1, align="h", axis="b", rel_widths = c(1
 
 
 ```
+
 
 ```{r shapefiles, include=F, warning=F}
 ### ROADS ###
@@ -411,7 +407,9 @@ saw_mill <- st_read("./Data/Raw/Saw_mill/Saw_mill.shp")
 st_crs(saw_mill)
 ```
 
-```{r mapping2, echo=F, , warning=F, fig.width=11, fig.height=8.5, fig.cap="Sum of above ground biomass (Mg) at each plot location in 2013. Nearby road, village, saw mill, and protected area locations are plotted to visualize the relationship between these variables and the amount of above ground biomass."}
+
+```{r mapping2, echo=F, , warning=F, message=F, fig.width=11, fig.height=8.5, fig.cap="Sum of above ground biomass (Mg) at each plot location in 2013. Nearby road, village, saw mill, and protected area locations are plotted to visualize the relationship between these variables and the amount of above ground biomass."}
+
 #pdf(here("Output", "Roads_Villages_PA_Plot.pdf"), width = 11, height = 8.5)
 
 ggmap(TerrainMap_congo) +
@@ -444,12 +442,69 @@ ggmap(TerrainMap_congo) +
 
 \newpage
 
+## Question 1: Is there significant difference in AGB between each of the years of data collection (2005, 2009, and 2013)?
+
+  In order to determine if there is significant increases in AGB between the years of data collection, a one-way anova was utilized to assess the effect that year has on the amount of AGB. A post-hoc Tukey test was implemented on the anova model to determine if there were significant differences between AGB for each year compared to the others. 
+
+  **The results show that there was a significant increase in AGB from 2005 to 2013, however not from 2005 to 2009 (ANOVA, p<0.001, F2,32750 = 42.6). The Tukey test reveals that there is no significant difference between the AGB values in 2005 compared to 2009 (p=0.287), whereas there is a significant difference between total AGB in 2005 and 2013 (p < 0.001) and between 2009 and 2013 (p < 0.001).**
+
+```{r glm_analysis, include=F, warning=F}
+
+AGB.by.year.model <- lm(data=melted_raw_data, value ~ as.factor(Year))
+AGB.by.year.model
+summary(AGB.by.year.model)
+
+TukeyHSD(aov(data=melted_raw_data, value ~ as.factor(Year)))
+
+```
+
+## Question 2: Which environmental factors are significant predictors of AGB?
+
+  In order to determine which variables significantly impact amount of AGB at a plot, a generalized linear model was implemented. For simplicity, only data from 2013 were analyzed. In this model, HFI, GlobCover, soil type, precipitation sum, distance to road, distance to village, distance to protected areas, and distance to saw mills were all considered as the predictor variables, and sum of AGB was the response variable. The step function was implemented to determine the best model by testing the different combination of predictor variables with the response variable, and designating the model with the lowest Akaike's Information Criterion (AIC) value. The model with the best fit included precipitation, distance to road, distance to village, distance to protected area, and distance to saw mills as predictor variables. Of these variables, all of them apart from distance to roads represented statistically significant impacts on change in AGB. 
+
+**The results of this model show that AGB increased with increasing precipitation, distances further from roads and villages, and distances closer to saw mills and protected areas (linear regression, R2 = 0.31, df = 5,24, p = 0.01)** (Figure 7)
+
+
+```{r glm_analysis2, include=F, warning=F}
+
+#Main effects sum '13
+AGB.main.13 <- lm(data = AGB_and_Covariates_by_Plot, sum_AGB13 ~ 
+                    as.factor(HFI) + as.factor(GlobCover) + as.factor(Soil) +
+                    Precip_sum_2013 + Dist_Road_m + Dist_Village_m + Dist_PA_m + 
+                    Dist_Saw_Mills_m)
+#summary(AGB.main.13)
+
+#step(AGB.main.13)
+
+#Best model
+AGB.main.13 <- lm(formula = sum_AGB13 ~ Precip_sum_2013 + 
+                    Dist_Road_m + Dist_Village_m + Dist_PA_m + 
+                    Dist_Saw_Mills_m, data = AGB_and_Covariates_by_Plot)
+AGB.main.13
+summary(AGB.main.13)
+
+```
+\newpage
+Figure 7 shows that the model fits the data well. The QQplot displays that the data are not normal. The Residuals vs Fitted and the Scale-Location graph show that the data are not gathered strongly to either side, and are evenly distributed around the line. Finally, the Residual's vs Leverage plot shows that the points are all within Cook's Distance, thus there are no drastic outliers. 
+
+```{r modelfit, echo=F, warning=F, fig.cap="Fit of the model that represents the effect of total precipitation, distance to the nearest road, distance to the nearest  village, distance to the nearest protected area, and distance to the nearest saw mill on total AGB at the plots in 2013"}
+par(mfrow=c(2,2))
+plot(AGB.main.13)
+```
+
+\newpage
+
 # Summary and Conclusions
 
+  Overall, this study found that there was no significant increase in total AGB across all plots between 2005 and 2009. However, there was a significant increase from 2005 to 2013, and from 2009 to 2013. This is not what one would expect to find in an undisturbed area, given that trees continue to grow with time. However, it is possible that the rate of logging exceeded the rate of tree growth between the years 2005 and 2009. Further research would have to be done to determine the cause of this lack of AGB increase.
+  This study also found that precipitation, distance to villages, distance to protected areas, and distance to saw mills all had a significant impact on the amount of AGB within a plot. AGB increased with increasing precipitation and increasing distance from the villages. AGB also increased in plots that were closer, or were located within the protected area. This all logically makes sense, given that rainfall increases tree growth, and the unprotected plots that are closer to villages are at an increased risk of logging. However, we did not expect to find that AGB would increase the closer the distance to the saw mill. 
+  It is clear from the lack of AGB increase from 2005 to 2009 and from the inverse relationship between AGB and distance to saw mills that further analysis is needed to explain some of these unexpected results. One possible source of error is the blank tree measurements in the data mentioned early in this report, or it is possible that illegal or legal logging is occurring at unprecedented rates. If the latter is true, studies like these have the potential to bring awareness to practices that cause hard to the environment and impact the carbon storage potential of forests.
 
 \newpage
 
 # References
 
+Chave, J., Réjou-Méchain, M., Búrquez, A., Chidumayo, E., Colgan, M. S., Delitti, W. B., … Vieilledent, G. (2014). Improved allometric models to estimate the aboveground biomass of tropical trees. Global Change Biology, 20(10), 3177–3190. doi: 10.1111/gcb.12629
+
 Duncanson, L., Armston, J., Disney, M. et al. The Importance of Consistent Global Forest Aboveground Biomass Product Validation. Surv Geophys 40, 979–999 (2019). https://doi.org/10.1007/s10712-019-09538-8
-<add references here if relevant, otherwise delete this section> 
+

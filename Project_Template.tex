@@ -1,3 +1,6 @@
+\PassOptionsToPackage{unicode=true}{hyperref} % options for packages loaded elsewhere
+\PassOptionsToPackage{hyphens}{url}
+%
 \documentclass[12pt,]{article}
 \usepackage{lmodern}
 \usepackage{amssymb,amsmath}
@@ -6,12 +9,9 @@
 \ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
   \usepackage[T1]{fontenc}
   \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provides euro and other symbols
 \else % if luatex or xelatex
-  \ifxetex
-    \usepackage{mathspec}
-  \else
-    \usepackage{fontspec}
-  \fi
+  \usepackage{unicode-math}
   \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
     \setmainfont[]{Times New Roman}
 \fi
@@ -19,17 +19,23 @@
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 % use microtype if available
 \IfFileExists{microtype.sty}{%
-\usepackage{microtype}
+\usepackage[]{microtype}
 \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
 }{}
-\usepackage[margin=2.54cm]{geometry}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
 \usepackage{hyperref}
-\hypersetup{unicode=true,
+\hypersetup{
             pdftitle={Factors Influencing Above Ground Biomass of Forest Plots in the Congo},
             pdfauthor={Nikki Egna},
             pdfborder={0 0 0},
             breaklinks=true}
 \urlstyle{same}  % don't use monospace font for urls
+\usepackage[margin=2.54cm]{geometry}
 \usepackage{color}
 \usepackage{fancyvrb}
 \newcommand{\VerbBar}{|}
@@ -71,6 +77,8 @@
 \newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
 \newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
 \usepackage{longtable,booktabs}
+% Fix footnotes in tables (requires footnote package)
+\IfFileExists{footnote.sty}{\usepackage{footnote}\makesavenoteenv{longtable}}{}
 \usepackage{graphicx,grffile}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
@@ -80,12 +88,6 @@
 % margins by default, and it is still possible to overwrite the defaults
 % using explicit options in \includegraphics[width, height, ...]{}
 \setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
-\IfFileExists{parskip.sty}{%
-\usepackage{parskip}
-}{% else
-\setlength{\parindent}{0pt}
-\setlength{\parskip}{6pt plus 2pt minus 1pt}
-}
 \setlength{\emergencystretch}{3em}  % prevent overfull lines
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
@@ -100,43 +102,29 @@
 \renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
 \fi
 
-%%% Use protect on footnotes to avoid problems with footnotes in titles
-\let\rmarkdownfootnote\footnote%
-\def\footnote{\protect\rmarkdownfootnote}
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
 
-%%% Change title format to be more compact
-\usepackage{titling}
-
-% Create subtitle command for use in maketitle
-\providecommand{\subtitle}[1]{
-  \posttitle{
-    \begin{center}\large#1\end{center}
-    }
+\usepackage{etoolbox}
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
 }
+\makeatother
 
-\setlength{\droptitle}{-2em}
-
-  \title{Factors Influencing Above Ground Biomass of Forest Plots in the Congo}
-    \pretitle{\vspace{\droptitle}\centering\huge}
-  \posttitle{\par}
-  \subtitle{\url{https://github.com/nikki-egna/ENV872_Final_Project_Congo_Carbon}}
-  \author{Nikki Egna}
-    \preauthor{\centering\large\emph}
-  \postauthor{\par}
-    \date{}
-    \predate{}\postdate{}
-  
+\title{Factors Influencing Above Ground Biomass of Forest Plots in the Congo}
+\providecommand{\subtitle}[1]{}
+\subtitle{\url{https://github.com/nikki-egna/ENV872_Final_Project_Congo_Carbon}}
+\author{Nikki Egna}
+\date{}
 
 \begin{document}
 \maketitle
-\begin{abstract}
-Add the abstract here
-\end{abstract}
 
 \newpage
 \tableofcontents 
-\newpage
-\listoftables 
 \newpage
 \listoffigures
 
@@ -146,16 +134,26 @@ Add the abstract here
 \section{Rationale and Research
 Questions}\label{rationale-and-research-questions}}
 
-Above ground biomass can be a predictor of overall health of a forest
-ecosystem. It is also important for looking at carbon storage potential
-of forests, which has significant implications for climate change
-mitigation. (Ducanson et al., 2019) This study aims to look at various
-environmental factors, and how they might contribute to differences in
-above ground biomass. The environmental factors included in this study
-are Human Footprint Index (HFI), GlobCover, annual precipitation, soil
-type, distance from the nearest road, distance from the nearest village,
-distance from the nearest river, distance from the nearest saw mill, and
-distance from the nearest protected area.
+Above ground biomass (AGB) is all biomass above the soil, including
+woody and herbaceous vegetation, stems, stumps, branches, bark, and
+foliage. Above ground biomass can be a predictor of overall health of a
+forest ecosystem. It is also important for looking at carbon storage
+potential of forests, which has significant implications for climate
+change mitigation. (Ducanson et al., 2019) Researchers in forestry,
+ecology, and agriculture often adopt the ``plot method'' for studying
+AGB by estimating and monitoring production or changes in carbon stocks.
+(Ducanson et al., 2019) The study conducted by the Poulsen Tropical
+Ecology Lab utilizes this ``plot method'' to estimate AGB from plots in
+the Republic of Congo, Africa. The Poulsen Lab estimated AGB using
+methodology from Chave et al. (2014). This study utilizes these AGB
+estimates to look at various environmental factors (covariates), and how
+they might contribute to differences in AGB at each forest plot. The
+environmental factors included in this study are Human Footprint Index
+(HFI), GlobCover, annual precipitation, soil type, distance from the
+nearest road, distance from the nearest village, distance from the
+nearest river, distance from the nearest saw mill, and distance from the
+nearest protected area. This study also quantifies the change in AGB
+between the measurement collection years of 2005, 2009, and 2013.
 
 \textbf{Question 1:}
 
@@ -339,6 +337,17 @@ Distance from plot to the nearest saw mill (Numeric; Meters)\strut
 \hypertarget{raw-data}{%
 \subsection{Raw Data}\label{raw-data}}
 
+To explore the raw data, the first few rows and the structure of the
+dataframe were analyzed. The class of each of the columns was also
+assesed, and any incorrect column classes were corrected. For this
+analysis, only the `Plot' column needed to be changed from numeric to a
+factor variable. The number of empty rows within the AGB measurement
+columns were also checked and quantified. It is critical to know if
+there were any missing measurements. Approximately 10\% of the data had
+missing values. The number of missing measurements, was reported back to
+The Poulsen Tropical Ecology Lab. It should be noted that the presence
+of missing data may alter the accuracy of the analysis presented here.
+
 \begin{Shaded}
 \begin{Highlighting}[]
 \CommentTok{#Check first few rows of data and the structure of the data}
@@ -360,11 +369,18 @@ Distance from plot to the nearest saw mill (Numeric; Meters)\strut
 \KeywordTok{nrow}\NormalTok{(}\KeywordTok{subset}\NormalTok{(Raw_CongoCarbon_Data, }\KeywordTok{is.na}\NormalTok{(AGB05.MgE)))}
 \KeywordTok{nrow}\NormalTok{(}\KeywordTok{subset}\NormalTok{(Raw_CongoCarbon_Data, }\KeywordTok{is.na}\NormalTok{(AGB09.MgE)))}
 \KeywordTok{nrow}\NormalTok{(}\KeywordTok{subset}\NormalTok{(Raw_CongoCarbon_Data, }\KeywordTok{is.na}\NormalTok{(AGB13.MgE)))}
+
+\CommentTok{#Proportion of NAs }
+\NormalTok{(}\KeywordTok{nrow}\NormalTok{(}\KeywordTok{subset}\NormalTok{(Raw_CongoCarbon_Data, }\KeywordTok{is.na}\NormalTok{(AGB05.MgE)))}\OperatorTok{/}\KeywordTok{nrow}\NormalTok{(Raw_CongoCarbon_Data))}\OperatorTok{*}\DecValTok{100}
 \end{Highlighting}
 \end{Shaded}
 
 \hypertarget{covariate-data}{%
 \subsection{Covariate Data}\label{covariate-data}}
+
+The dataset containing the covariate values at each plot was analyzed
+similarly to the raw data. The beginning rows of the dataset, as well as
+the structure, and then the class of each column were assessed.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -376,14 +392,22 @@ Distance from plot to the nearest saw mill (Numeric; Meters)\strut
 \end{Highlighting}
 \end{Shaded}
 
-\newpage
-
 \hypertarget{analysis}{%
 \section{Analysis}\label{analysis}}
 
-\textbf{Wrangle raw datasets to create a final dataframe with covariate
-values, sum of AGB for each year, and the change in AGB by year for each
-plot location}
+The raw data was wrangled in order to obtain the AGB sum of all the
+trees within each plot. Columns for the change in AGB between the years
+were created by subtracting the sum AGB of the following measurement
+year from the sum AGB from the prior measurement year. This created a
+data frame (AGB\_by\_Plot) with the plot number and the total sum AGB at
+each plot for the years 2005, 2009, and 2013, as well as the change in
+AGB from 2005-2009, 2009-2013, and 2005-2013. The AGB\_by\_Plot data
+from was then merged with the raw covariates data to create one final
+dataframe. This final data frame includes plot number, all covariate
+values at each plot, the sum AGB for each year at each plot, and the
+change in AGB from one measurement year to another for each plot. This
+data frame is saved as CongoCarbon\_AGB\_and\_Covariates\_by\_Plot.csv
+in the Data/Processed directory of the repository.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -405,7 +429,21 @@ plot location}
 \end{Highlighting}
 \end{Shaded}
 
-\emph{Prepare data in correct format for analysis and graphing}
+Further data wrangling was necessary in order to graph this data. The
+dataframe created above (AGB\_and\_Covariates\_by\_Plot) is in
+horizontal form. In order to move forward with this analysis, the data
+must be in vertical form, so the melt() function was implemented to
+complete this task. Through use of this tool, a new dataframe
+(melted\_AGB\_by\_Plot) was created, containing columns for plot, year,
+the variable (either sum AGB or change in AGB) and the AGB value. Rather
+than having multiple columns for each measurement year of AGB and
+multiple columns for the change in AGB measurements, there is now one
+column for AGB value, one column for year, and one column for variable.
+The melted dataframe was then subsetted to make two new sets of data,
+one for the sum values of AGB, and one for the values of change in AGB.
+The same process was applied to the original raw data
+(Raw\_CongoCarbon\_data) by selecting the necessary columns and applying
+the melt function.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -431,12 +469,6 @@ plot location}
 \StringTok{  }\KeywordTok{group_by}\NormalTok{(variable) }\OperatorTok{%>%}
 \StringTok{  }\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{sum=}\KeywordTok{sum}\NormalTok{(value))}
 
-\CommentTok{#Raw data}
-\CommentTok{#Add column for percent change}
-\NormalTok{Raw_CongoCarbon_Data}\OperatorTok{$}\NormalTok{Percent_Change_}\DecValTok{0513}\NormalTok{ <-}
-\StringTok{  }\NormalTok{((Raw_CongoCarbon_Data}\OperatorTok{$}\NormalTok{AGB13}\OperatorTok{-}\NormalTok{Raw_CongoCarbon_Data}\OperatorTok{$}\NormalTok{AGB05)}\OperatorTok{/}
-\StringTok{     }\NormalTok{Raw_CongoCarbon_Data}\OperatorTok{$}\NormalTok{AGB05.MgE)}\OperatorTok{*}\DecValTok{100}
-
 \CommentTok{#Subset necessary data}
 \NormalTok{Raw_data_subset <-}\StringTok{ }\NormalTok{Raw_CongoCarbon_Data }\OperatorTok{%>%}
 \StringTok{  }\NormalTok{dplyr}\OperatorTok{::}\KeywordTok{select}\NormalTok{(Tree.ID, Plot, AGB05.MgE, AGB09.MgE, AGB13.MgE)}
@@ -455,8 +487,38 @@ plot location}
 \end{Highlighting}
 \end{Shaded}
 
+\newpage
+
 \hypertarget{data-visualization}{%
 \subsection{Data visualization}\label{data-visualization}}
+
+Figure 1 shows histograms of the AGB values of the raw data for each
+year. This provides general insight about the data, such as the
+normality, whether there are outliers present, and also compares the
+values of AGB measurements for each of the years. We can see that, for
+all years, a vast majority of the measurements are very low (between 0
+and 10 Mg), but there are a few significant outliers (Figure 1).
+
+\begin{figure}
+\centering
+\includegraphics{Project_Template_files/figure-latex/histograms-1.pdf}
+\caption{Histogram showing the distribution of AGB measurements of the
+trees for 2005, 2009, and 2013.}
+\end{figure}
+
+\begin{verbatim}
+## null device 
+##           1
+\end{verbatim}
+
+\newpage
+
+In order to further vizualize how AGB may differ between the
+measurements years, a line graph represents the change in the sum of AGB
+of each plot over time (Figure 2). Each line represents a different plot
+number. Here, we can speculate that there was not much change in AGB
+from 2005 to 2009, however there was significant change from 2009 to
+2013.
 
 \begin{figure}
 \centering
@@ -465,12 +527,32 @@ plot location}
 each plot between 2005, 2009, and 2013.}
 \end{figure}
 
+The following violin plot shows the distribution of AGB measurements
+within each plot for 2005, 2009, and 2013 (Figure 3). Similar to the
+histogram, we can see that a majority of the values are low
+measurements, with the presence of significant outliers. We can see here
+the differences in AGB values not only between the different trees
+within each plots (shown by the long tails), however we also see that
+there are differences between the overall sum AGB from one plot to
+another.
+
 \begin{figure}
 \centering
 \includegraphics{Project_Template_files/figure-latex/dataviz_2013-1.pdf}
-\caption{Relationship between above ground biomass at each plot in
-2013.}
+\caption{Relationship between above ground biomass at each plot in 2005,
+2009, and 2013.}
 \end{figure}
+
+\newpage
+
+Figure 4 displays the sum AGB of all trees within each plot to vizualize
+the differences in AGB from one plot to another. For simplicity, the
+measurements collected in 2013 were the sole focus. Here we can more
+difinitively see the differences between total AGB at each plot. Where
+some plots, for example plot 1, had total AGB as low as 100 Mg, plot 22
+had a total AGB of over 500 Mg (Figure 4). These differences prompted
+the second study question: what environmental variables may be affecting
+the amount of total AGB within a plot.
 
 \begin{figure}
 \centering
@@ -479,149 +561,7 @@ each plot between 2005, 2009, and 2013.}
 2013.}
 \end{figure}
 
-\hypertarget{question-1-is-there-significant-difference-in-agb-between-each-of-the-years-of-data-collection-2005-2009-and-2013}{%
-\subsection{Question 1: Is there significant difference in AGB between
-each of the years of data collection (2005, 2009, and
-2013)?}\label{question-1-is-there-significant-difference-in-agb-between-each-of-the-years-of-data-collection-2005-2009-and-2013}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{AGB.by.year.model <-}\StringTok{ }\KeywordTok{lm}\NormalTok{(}\DataTypeTok{data=}\NormalTok{melted_raw_data, value }\OperatorTok{~}\StringTok{ }\KeywordTok{as.factor}\NormalTok{(Year))}
-\KeywordTok{summary}\NormalTok{(AGB.by.year.model)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## 
-## Call:
-## lm(formula = value ~ as.factor(Year), data = melted_raw_data)
-## 
-## Residuals:
-##    Min     1Q Median     3Q    Max 
-##  -0.91  -0.64  -0.56  -0.30 106.06 
-## 
-## Coefficients:
-##                     Estimate Std. Error t value Pr(>|t|)    
-## (Intercept)           0.6136     0.0237   25.94   <2e-16 ***
-## as.factor(Year)2009   0.0509     0.0338    1.51     0.13    
-## as.factor(Year)2013   0.2939     0.0339    8.68   <2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 2.51 on 32750 degrees of freedom
-##   (4930 observations deleted due to missingness)
-## Multiple R-squared:  0.0026, Adjusted R-squared:  0.00253 
-## F-statistic: 42.6 on 2 and 32750 DF,  p-value: <2e-16
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{TukeyHSD}\NormalTok{(}\KeywordTok{aov}\NormalTok{(}\DataTypeTok{data=}\NormalTok{melted_raw_data, value }\OperatorTok{~}\StringTok{ }\KeywordTok{as.factor}\NormalTok{(Year)))}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-##   Tukey multiple comparisons of means
-##     95% family-wise confidence level
-## 
-## Fit: aov(formula = value ~ as.factor(Year), data = melted_raw_data)
-## 
-## $`as.factor(Year)`
-##             diff     lwr   upr p adj
-## 2009-2005 0.0509 -0.0282 0.130 0.287
-## 2013-2005 0.2939  0.2146 0.373 0.000
-## 2013-2009 0.2430  0.1629 0.323 0.000
-\end{verbatim}
-
-\hypertarget{question-2-which-environmental-factors-are-significant-predictors-of-agb}{%
-\subsection{Question 2: Which environmental factors are significant
-predictors of
-AGB?}\label{question-2-which-environmental-factors-are-significant-predictors-of-agb}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{#Main effects sum '13}
-\NormalTok{AGB.main}\FloatTok{.13}\NormalTok{ <-}\StringTok{ }\KeywordTok{lm}\NormalTok{(}\DataTypeTok{data =}\NormalTok{ AGB_and_Covariates_by_Plot, sum_AGB13 }\OperatorTok{~}\StringTok{ }
-\StringTok{                    }\KeywordTok{as.factor}\NormalTok{(HFI) }\OperatorTok{+}\StringTok{ }\KeywordTok{as.factor}\NormalTok{(GlobCover) }\OperatorTok{+}\StringTok{ }\KeywordTok{as.factor}\NormalTok{(Soil) }\OperatorTok{+}
-\StringTok{                    }\NormalTok{Precip_sum_}\DecValTok{2013} \OperatorTok{+}\StringTok{ }\NormalTok{Dist_Road_m }\OperatorTok{+}\StringTok{ }\NormalTok{Dist_Village_m }\OperatorTok{+}\StringTok{ }\NormalTok{Dist_PA_m }\OperatorTok{+}\StringTok{ }
-\StringTok{                    }\NormalTok{Dist_Saw_Mills_m)}
-\CommentTok{#summary(AGB.main.13)}
-
-\CommentTok{#step(AGB.main.13)}
-
-\CommentTok{#Best model}
-\NormalTok{AGB.main}\FloatTok{.13}\NormalTok{ <-}\StringTok{ }\KeywordTok{lm}\NormalTok{(}\DataTypeTok{formula =}\NormalTok{ sum_AGB13 }\OperatorTok{~}\StringTok{ }\NormalTok{Precip_sum_}\DecValTok{2013} \OperatorTok{+}\StringTok{ }
-\StringTok{                    }\NormalTok{Dist_Road_m }\OperatorTok{+}\StringTok{ }\NormalTok{Dist_Village_m }\OperatorTok{+}\StringTok{ }\NormalTok{Dist_PA_m }\OperatorTok{+}\StringTok{ }
-\StringTok{                    }\NormalTok{Dist_Saw_Mills_m, }\DataTypeTok{data =}\NormalTok{ AGB_and_Covariates_by_Plot)}
-\NormalTok{AGB.main}\FloatTok{.13}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## 
-## Call:
-## lm(formula = sum_AGB13 ~ Precip_sum_2013 + Dist_Road_m + Dist_Village_m + 
-##     Dist_PA_m + Dist_Saw_Mills_m, data = AGB_and_Covariates_by_Plot)
-## 
-## Coefficients:
-##      (Intercept)   Precip_sum_2013       Dist_Road_m    Dist_Village_m  
-##        -2.20e+02          3.84e+00          9.83e-03          5.78e-03  
-##        Dist_PA_m  Dist_Saw_Mills_m  
-##        -7.54e-03         -1.03e-02
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\KeywordTok{summary}\NormalTok{(AGB.main}\FloatTok{.13}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## 
-## Call:
-## lm(formula = sum_AGB13 ~ Precip_sum_2013 + Dist_Road_m + Dist_Village_m + 
-##     Dist_PA_m + Dist_Saw_Mills_m, data = AGB_and_Covariates_by_Plot)
-## 
-## Residuals:
-##    Min     1Q Median     3Q    Max 
-##  -98.5  -37.8   -8.5   16.1  181.3 
-## 
-## Coefficients:
-##                   Estimate Std. Error t value Pr(>|t|)  
-## (Intercept)      -2.20e+02   4.13e+02   -0.53    0.599  
-## Precip_sum_2013   3.84e+00   2.23e+00    1.72    0.099 .
-## Dist_Road_m       9.83e-03   5.96e-03    1.65    0.112  
-## Dist_Village_m    5.78e-03   3.33e-03    1.73    0.096 .
-## Dist_PA_m        -7.54e-03   3.71e-03   -2.03    0.053 .
-## Dist_Saw_Mills_m -1.03e-02   5.26e-03   -1.95    0.062 .
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 65.4 on 24 degrees of freedom
-## Multiple R-squared:  0.427,  Adjusted R-squared:  0.307 
-## F-statistic: 3.57 on 5 and 24 DF,  p-value: 0.0148
-\end{verbatim}
-
-\includegraphics{Project_Template_files/figure-latex/modelfit-1.pdf}
 \newpage
-
-\begin{verbatim}
-##        Plot    Latitude   Longitude 
-## "character"   "numeric"   "numeric"
-\end{verbatim}
-
-\begin{verbatim}
-## Source : https://maps.googleapis.com/maps/api/staticmap?center=2.195,16.28&zoom=11&size=640x640&scale=2&maptype=terrain&language=en-EN&key=xxx-_hVA-JJT5tSe8llJC0T_XA
-\end{verbatim}
-
-\begin{verbatim}
-## Source : https://maps.googleapis.com/maps/api/staticmap?center=2.25,16.25&zoom=10&size=640x640&scale=2&maptype=satellite&language=en-EN&key=xxx-_hVA-JJT5tSe8llJC0T_XA
-\end{verbatim}
-
-\begin{verbatim}
-## Scale on map varies by more than 10%, scale bar may be inaccurate
-## Scale on map varies by more than 10%, scale bar may be inaccurate
-\end{verbatim}
 
 \begin{figure}
 \centering
@@ -629,10 +569,6 @@ AGB?}\label{question-2-which-environmental-factors-are-significant-predictors-of
 \caption{Map displaying the location of the forest plots within the
 Republic of Congo, Africa.}
 \end{figure}
-
-\begin{verbatim}
-## Coordinate system already present. Adding new coordinate system, which will replace the existing one.
-\end{verbatim}
 
 \begin{figure}
 \centering
@@ -645,19 +581,112 @@ above ground biomass.}
 
 \newpage
 
+\hypertarget{question-1-is-there-significant-difference-in-agb-between-each-of-the-years-of-data-collection-2005-2009-and-2013}{%
+\subsection{Question 1: Is there significant difference in AGB between
+each of the years of data collection (2005, 2009, and
+2013)?}\label{question-1-is-there-significant-difference-in-agb-between-each-of-the-years-of-data-collection-2005-2009-and-2013}}
+
+In order to determine if there is significant increases in AGB between
+the years of data collection, a one-way anova was utilized to assess the
+effect that year has on the amount of AGB. A post-hoc Tukey test was
+implemented on the anova model to determine if there were significant
+differences between AGB for each year compared to the others.
+
+\textbf{The results show that there was a significant increase in AGB
+from 2005 to 2013, however not from 2005 to 2009 (ANOVA,
+p\textless{}0.001, F2,32750 = 42.6). The Tukey test reveals that there
+is no significant difference between the AGB values in 2005 compared to
+2009 (p=0.287), whereas there is a significant difference between total
+AGB in 2005 and 2013 (p \textless{} 0.001) and between 2009 and 2013 (p
+\textless{} 0.001).}
+
+\hypertarget{question-2-which-environmental-factors-are-significant-predictors-of-agb}{%
+\subsection{Question 2: Which environmental factors are significant
+predictors of
+AGB?}\label{question-2-which-environmental-factors-are-significant-predictors-of-agb}}
+
+In order to determine which variables significantly impact amount of AGB
+at a plot, a generalized linear model was implemented. For simplicity,
+only data from 2013 were analyzed. In this model, HFI, GlobCover, soil
+type, precipitation sum, distance to road, distance to village, distance
+to protected areas, and distance to saw mills were all considered as the
+predictor variables, and sum of AGB was the response variable. The step
+function was implemented to determine the best model by testing the
+different combination of predictor variables with the response variable,
+and designating the model with the lowest Akaike's Information Criterion
+(AIC) value. The model with the best fit included precipitation,
+distance to road, distance to village, distance to protected area, and
+distance to saw mills as predictor variables. Of these variables, all of
+them apart from distance to roads represented statistically significant
+impacts on change in AGB.
+
+\textbf{The results of this model show that AGB increased with
+increasing precipitation, distances further from roads and villages, and
+distances closer to saw mills and protected areas (linear regression, R2
+= 0.31, df = 5,24, p = 0.01)} (Figure 7)
+
+\newpage
+
+Figure 7 shows that the model fits the data well. The QQplot displays
+that the data are not normal. The Residuals vs Fitted and the
+Scale-Location graph show that the data are not gathered strongly to
+either side, and are evenly distributed around the line. Finally, the
+Residual's vs Leverage plot shows that the points are all within Cook's
+Distance, thus there are no drastic outliers.
+
+\begin{figure}
+\centering
+\includegraphics{Project_Template_files/figure-latex/modelfit-1.pdf}
+\caption{Fit of the model that represents the effect of total
+precipitation, distance to the nearest road, distance to the nearest
+village, distance to the nearest protected area, and distance to the
+nearest saw mill on total AGB at the plots in 2013}
+\end{figure}
+
+\newpage
+
 \hypertarget{summary-and-conclusions}{%
 \section{Summary and Conclusions}\label{summary-and-conclusions}}
+
+Overall, this study found that there was no significant increase in
+total AGB across all plots between 2005 and 2009. However, there was a
+significant increase from 2005 to 2013, and from 2009 to 2013. This is
+not what one would expect to find in an undisturbed area, given that
+trees continue to grow with time. However, it is possible that the rate
+of logging exceeded the rate of tree growth between the years 2005 and
+2009. Further research would have to be done to determine the cause of
+this lack of AGB increase. This study also found that precipitation,
+distance to villages, distance to protected areas, and distance to saw
+mills all had a significant impact on the amount of AGB within a plot.
+AGB increased with increasing precipitation and increasing distance from
+the villages. AGB also increased in plots that were closer, or were
+located within the protected area. This all logically makes sense, given
+that rainfall increases tree growth, and the unprotected plots that are
+closer to villages are at an increased risk of logging. However, we did
+not expect to find that AGB would increase the closer the distance to
+the saw mill. It is clear from the lack of AGB increase from 2005 to
+2009 and from the inverse relationship between AGB and distance to saw
+mills that further analysis is needed to explain some of these
+unexpected results. One possible source of error is the blank tree
+measurements in the data mentioned early in this report, or it is
+possible that illegal or legal logging is occurring at unprecedented
+rates. If the latter is true, studies like these have the potential to
+bring awareness to practices that cause hard to the environment, and
+could impact the
 
 \newpage
 
 \hypertarget{references}{%
 \section{References}\label{references}}
 
+Chave, J., Réjou-Méchain, M., Búrquez, A., Chidumayo, E., Colgan, M. S.,
+Delitti, W. B., \ldots{} Vieilledent, G. (2014). Improved allometric
+models to estimate the aboveground biomass of tropical trees. Global
+Change Biology, 20(10), 3177--3190. doi: 10.1111/gcb.12629
+
 Duncanson, L., Armston, J., Disney, M. et al.~The Importance of
 Consistent Global Forest Aboveground Biomass Product Validation. Surv
 Geophys 40, 979--999 (2019).
-\url{https://doi.org/10.1007/s10712-019-09538-8} \textless{}add
-references here if relevant, otherwise delete this section\textgreater{}
-
+\url{https://doi.org/10.1007/s10712-019-09538-8}
 
 \end{document}
